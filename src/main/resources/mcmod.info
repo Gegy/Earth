@@ -1,0 +1,16 @@
+[
+{
+  "modid": "earth",
+  "name": "The Earth Mod",
+  "description": "Adds a new World Type, that generates the Earth based on real data!",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["gegy1000"],
+  "credits": "NASA for Earth data, and Google for Street View data",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]

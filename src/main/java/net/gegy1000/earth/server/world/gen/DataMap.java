@@ -106,12 +106,7 @@ public class DataMap
         ByteBuffer buf = ByteBuffer.allocate(4);
         channel.read(buf);
 
-        byte b0 = buf.get(0);
-        byte b1 = buf.get(1);
-        byte b2 = buf.get(2);
-        byte b3 = buf.get(3);
-
-        return ByteBuffer.wrap(new byte[] { b0, b1, b2, b3 }).getInt();
+        return ByteBuffer.wrap(buf.array()).getInt();
     }
 
     private static void copyFile(InputStream in, File to) throws IOException
@@ -130,7 +125,9 @@ public class DataMap
 
         byte[] buffer = new byte[8024];
         int n;
-        while (-1 != (n = in.read(buffer))) {
+
+        while (-1 != (n = in.read(buffer)))
+        {
             out.write(buffer, 0, n);
         }
 

@@ -237,7 +237,7 @@ public class EarthGen
     {
         if (x < 0 || x >= heightmap.getWidth() || y < 0 || y >= heightmap.getHeight())
         {
-            return Math.min(Math.max(0, 0), 255);
+            return 0;
         }
 
         return heightmap.getData(x, y);

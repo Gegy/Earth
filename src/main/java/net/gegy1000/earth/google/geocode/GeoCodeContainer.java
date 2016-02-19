@@ -11,6 +11,7 @@ public class GeoCodeContainer
         public String formatted_address;
         public AddressComponent[] address_components;
         public Geometry geometry;
+        public String place_id;
     }
 
     public class Geometry

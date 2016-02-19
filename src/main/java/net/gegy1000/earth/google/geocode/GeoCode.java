@@ -8,26 +8,31 @@ import java.net.URL;
 
 public class GeoCode
 {
-    private String formattedAddress;
+    private double lat, lon;
 
-    private GeoCode(String formattedAddress)
+    private GeoCode(double lat, double lon)
     {
-        this.formattedAddress = formattedAddress;
+        this.lat = lat;
+        this.lon = lon;
     }
 
-    public static GeoCode get(double lat, double lon) throws IOException
+    public static GeoCode get(String place) throws IOException
     {
-        String req = "latlng=" + lat + "," + lon + "&sensor=false";
-        URL url = new URL("http://maps.googleapis.com/maps/api/geocode/json?" + req);
+        String req = "address=" + place.replaceAll(" ", "+");
+        URL url = new URL("https://maps.googleapis.com/maps/api/geocode/json?" + req);
 
-        Gson gson = new Gson();
-        GeoCodeContainer container = gson.fromJson(new InputStreamReader(url.openStream()), GeoCodeContainer.class);
+        GeoCodeContainer.Location location = new Gson().fromJson(new InputStreamReader(url.openStream()), GeoCodeContainer.class).results[0].geometry.location;
 
-        return new GeoCode(container.results[0].formatted_address);
+        return new GeoCode(location.lat, location.lng);
     }
 
-    public String getFormattedAddress()
+    public double getLat()
     {
-        return formattedAddress;
+        return lat;
+    }
+
+    public double getLon()
+    {
+        return lon;
     }
 }

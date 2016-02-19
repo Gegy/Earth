@@ -21,6 +21,8 @@ public class GuiSelectSpawn extends GuiScreen
 
     public void initGui()
     {
+        this.buttonList.clear();
+
         ScaledResolution resolution = new ScaledResolution(mc);
 
         int scaledWidth = resolution.getScaledWidth();

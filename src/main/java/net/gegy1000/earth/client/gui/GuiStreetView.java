@@ -1,7 +1,7 @@
 package net.gegy1000.earth.client.gui;
 
 import net.gegy1000.earth.Earth;
-import net.gegy1000.earth.google.geocode.GeoCode;
+import net.gegy1000.earth.google.geocode.ReverseGeoCode;
 import net.gegy1000.earth.google.streetview.StreetView;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
@@ -38,7 +38,7 @@ public class GuiStreetView extends GuiScreen
                 {
                     StreetView streetView = StreetView.get(latitude, longitude, player.rotationYaw - 180, -player.rotationPitch);
                     image = streetView.getImage();
-                    address = GeoCode.get(latitude, longitude).getFormattedAddress();
+                    address = ReverseGeoCode.get(latitude, longitude).getFormattedAddress();
                 }
                 catch (IOException e)
                 {

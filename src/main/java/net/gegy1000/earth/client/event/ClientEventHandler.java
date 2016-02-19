@@ -1,6 +1,7 @@
 package net.gegy1000.earth.client.event;
 
 import net.gegy1000.earth.client.gui.GuiStreetView;
+import net.gegy1000.earth.client.gui.GuiTeleportPlace;
 import net.gegy1000.earth.client.key.EarthKeyBinds;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -16,6 +17,10 @@ public class ClientEventHandler
         if (EarthKeyBinds.key_streetview.isPressed())
         {
             mc.displayGuiScreen(new GuiStreetView(mc.thePlayer));
+        }
+        else if (EarthKeyBinds.key_tp_place.isPressed())
+        {
+            mc.displayGuiScreen(new GuiTeleportPlace());
         }
     }
 }

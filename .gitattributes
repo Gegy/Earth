@@ -15,3 +15,5 @@
 *.PDF	 diff=astextplain
 *.rtf	 diff=astextplain
 *.RTF	 diff=astextplain
+*.mchmap filter=lfs diff=lfs merge=lfs -text
+*.mcbmap filter=lfs diff=lfs merge=lfs -text

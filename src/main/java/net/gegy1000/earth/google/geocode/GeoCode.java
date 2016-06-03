@@ -6,18 +6,16 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 
-public class GeoCode
-{
-    private double lat, lon;
+public class GeoCode {
+    private final double latitude;
+    private final double longitude;
 
-    private GeoCode(double lat, double lon)
-    {
-        this.lat = lat;
-        this.lon = lon;
+    private GeoCode(double latitude, double longitude) {
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
-    public static GeoCode get(String place) throws IOException
-    {
+    public static GeoCode get(String place) throws IOException {
         String req = "address=" + place.replaceAll(" ", "+");
         URL url = new URL("https://maps.googleapis.com/maps/api/geocode/json?" + req);
 
@@ -26,13 +24,11 @@ public class GeoCode
         return new GeoCode(location.lat, location.lng);
     }
 
-    public double getLat()
-    {
-        return lat;
+    public double getLatitude() {
+        return latitude;
     }
 
-    public double getLon()
-    {
-        return lon;
+    public double getLongitude() {
+        return longitude;
     }
 }

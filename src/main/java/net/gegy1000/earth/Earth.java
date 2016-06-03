@@ -7,13 +7,10 @@ import net.minecraft.world.WorldType;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartedEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 
 @Mod(modid = Earth.MODID, name = "Earth", version = Earth.VERSION)
-public class Earth
-{
+public class Earth {
     public static EarthGen generator;
 
     private WorldType earth;
@@ -22,13 +19,10 @@ public class Earth
     public static ServerProxy proxy;
 
     public static final String MODID = "earth";
-    public static final String VERSION = "1.0.0";
+    public static final String VERSION = "1.1.0";
 
     @Mod.EventHandler
-    public void preInit(FMLPreInitializationEvent event)
-    {
-//        EarthNetworkManager.init();
-
+    public void preInit(FMLPreInitializationEvent event) {
         generator = new EarthGen();
         earth = new WorldTypeEarth(generator);
 
@@ -36,8 +30,7 @@ public class Earth
     }
 
     @Mod.EventHandler
-    public void serverStarting(FMLServerStartingEvent event)
-    {
+    public void serverStarting(FMLServerStartingEvent event) {
         proxy.serverStart(event);
     }
 }

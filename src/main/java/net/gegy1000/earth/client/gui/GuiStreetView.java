@@ -7,41 +7,36 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
+import org.lwjgl.opengl.GL11;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
-public class GuiStreetView extends GuiScreen
-{
+public class GuiStreetView extends GuiScreen {
     private DynamicTexture dynamicTexture;
     private ResourceLocation location;
     private BufferedImage image;
-    private double latitude, longitude;
+    private final double latitude;
+    private final double longitude;
     private String address;
 
-    public GuiStreetView(final EntityPlayer player)
-    {
+    public GuiStreetView(final EntityPlayer player) {
         latitude = Earth.generator.toLat(player.posZ);
         longitude = Earth.generator.toLong(player.posX);
 
-        Thread downloadThread = new Thread(new Runnable()
-        {
+        Thread downloadThread = new Thread(new Runnable() {
             @Override
-            public void run()
-            {
-                try
-                {
+            public void run() {
+                try {
                     StreetView streetView = StreetView.get(latitude, longitude, player.rotationYaw - 180, -player.rotationPitch);
                     image = streetView.getImage();
                     address = ReverseGeoCode.get(latitude, longitude).getFormattedAddress();
-                }
-                catch (IOException e)
-                {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
@@ -51,8 +46,7 @@ public class GuiStreetView extends GuiScreen
     }
 
     @Override
-    public void drawScreen(int mouseX, int mouseY, float partialTicks)
-    {
+    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         super.drawScreen(mouseX, mouseY, partialTicks);
 
         drawDefaultBackground();
@@ -62,18 +56,14 @@ public class GuiStreetView extends GuiScreen
         int scaledWidth = scaledResolution.getScaledWidth();
         int scaledHeight = scaledResolution.getScaledHeight();
 
-        if (dynamicTexture == null)
-        {
-            if (image != null)
-            {
+        if (dynamicTexture == null) {
+            if (image != null) {
                 dynamicTexture = new DynamicTexture(image);
                 location = mc.getTextureManager().getDynamicTextureLocation("streetview_image", dynamicTexture);
             }
 
             fontRendererObj.drawStringWithShadow("Downloading Image...", 10, 10, 0xFF0000);
-        }
-        else
-        {
+        } else {
             fontRendererObj.drawStringWithShadow("Location: Lat: " + latitude + ", Long: " + longitude, 5, 5, 0xFF0000);
             fontRendererObj.drawStringWithShadow(address, 5, 15, 0x00FFFF);
 
@@ -86,11 +76,8 @@ public class GuiStreetView extends GuiScreen
         }
     }
 
-    /**
-     * Draws a textured rectangle at the stored z-value. Args: x, y, u, v, width, height
-     */
-    public void drawTexturedModalRect(int x, int y, int textureX, int textureY, int width, int height, int texWidth, int texHeight, double scaleX, double scaleY)
-    {
+    public void drawTexturedModalRect(int x, int y, int textureX, int textureY, int width, int height, int texWidth, int texHeight, double scaleX, double scaleY) {
+        GlStateManager.pushMatrix();
         GlStateManager.color(1.0F, 1.0F, 1.0F);
         GlStateManager.scale(scaleX, scaleY, 0.0);
 
@@ -100,26 +87,25 @@ public class GuiStreetView extends GuiScreen
         float f = 1.0F / texWidth;
         float f1 = 1.0F / texHeight;
         Tessellator tessellator = Tessellator.getInstance();
-        WorldRenderer worldrenderer = tessellator.getWorldRenderer();
-        worldrenderer.begin(7, DefaultVertexFormats.POSITION_TEX);
-        worldrenderer.pos((double) (x + 0), (double) (y + height), (double) this.zLevel).tex((double) ((float) (textureX + 0) * f), (double) ((float) (textureY + height) * f1)).endVertex();
-        worldrenderer.pos((double) (x + width), (double) (y + height), (double) this.zLevel).tex((double) ((float) (textureX + width) * f), (double) ((float) (textureY + height) * f1)).endVertex();
-        worldrenderer.pos((double) (x + width), (double) (y + 0), (double) this.zLevel).tex((double) ((float) (textureX + width) * f), (double) ((float) (textureY + 0) * f1)).endVertex();
-        worldrenderer.pos((double) (x + 0), (double) (y + 0), (double) this.zLevel).tex((double) ((float) (textureX + 0) * f), (double) ((float) (textureY + 0) * f1)).endVertex();
+        VertexBuffer buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        buffer.pos(x, y + height, this.zLevel).tex(textureX * f, (textureY + height) * f1).endVertex();
+        buffer.pos(x + width, y + height, this.zLevel).tex((textureX + width) * f, (textureY + height) * f1).endVertex();
+        buffer.pos(x + width, y, this.zLevel).tex((textureX + width) * f, (textureY * f1)).endVertex();
+        buffer.pos(x, y, this.zLevel).tex(textureX * f, textureY * f1).endVertex();
         tessellator.draw();
+        GlStateManager.popMatrix();
     }
 
     @Override
-    public void onGuiClosed()
-    {
+    public void onGuiClosed() {
         super.onGuiClosed();
 
         mc.getTextureManager().deleteTexture(location);
     }
 
     @Override
-    public boolean doesGuiPauseGame()
-    {
+    public boolean doesGuiPauseGame() {
         return false;
     }
 }

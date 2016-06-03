@@ -2,31 +2,29 @@ package net.gegy1000.earth.server.world.gen;
 
 import net.minecraft.world.World;
 import net.minecraft.world.WorldType;
-import net.minecraft.world.biome.WorldChunkManager;
+import net.minecraft.world.biome.BiomeProvider;
+import net.minecraft.world.chunk.IChunkGenerator;
 
-public class WorldTypeEarth extends WorldType
-{
-    private EarthGen generator;
+public class WorldTypeEarth extends WorldType {
+    private final EarthGen generator;
 
-    public WorldTypeEarth(EarthGen generator)
-    {
+    public WorldTypeEarth(EarthGen generator) {
         super("earth");
         this.generator = generator;
     }
 
-    public net.minecraft.world.chunk.IChunkProvider getChunkGenerator(World world, String generatorOptions)
-    {
-        return new ChunkProviderEarth(world, world.getSeed(), generator);
-    }
-
-    public WorldChunkManager getChunkManager(World world)
-    {
-        return new WorldChunkManagerEarth(world, generator);
+    @Override
+    public IChunkGenerator getChunkGenerator(World world, String generatorOptions) {
+        return new ChunkGeneratorEarth(world, world.getSeed(), generator);
     }
 
     @Override
-    public float getCloudHeight()
-    {
+    public BiomeProvider getBiomeProvider(World world) {
+        return new BiomeProviderEarth(generator);
+    }
+
+    @Override
+    public float getCloudHeight() {
         return 170;
     }
 }

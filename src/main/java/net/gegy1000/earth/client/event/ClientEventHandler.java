@@ -7,19 +7,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent;
 
-public class ClientEventHandler
-{
+public class ClientEventHandler {
     private static final Minecraft mc = Minecraft.getMinecraft();
 
     @SubscribeEvent
-    public void keyPress(InputEvent.KeyInputEvent event)
-    {
-        if (EarthKeyBinds.key_streetview.isPressed())
-        {
+    public void keyPress(InputEvent.KeyInputEvent event) {
+        if (EarthKeyBinds.KEY_STREET_VIEW.isPressed()) {
             mc.displayGuiScreen(new GuiStreetView(mc.thePlayer));
-        }
-        else if (EarthKeyBinds.key_tp_place.isPressed())
-        {
+        } else if (EarthKeyBinds.KEY_TELEPORT_PLACE.isPressed()) {
             mc.displayGuiScreen(new GuiTeleportPlace());
         }
     }

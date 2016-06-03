@@ -1,8 +1,10 @@
 package net.gegy1000.earth.server.world.gen;
 
 import com.google.common.collect.HashMultimap;
+import net.gegy1000.earth.Earth;
 import net.minecraft.init.Biomes;
 import net.minecraft.world.biome.Biome;
+import net.minecraftforge.fml.common.ProgressManager;
 
 import java.io.IOException;
 import java.util.Map;
@@ -22,25 +24,30 @@ public class EarthGen {
 
     public static final Biome DEFAULT_BIOME = Biomes.OCEAN;
 
-    public void load() throws IOException {
+    public static final int HEIGHTMAP_VERSION = 1;
+    public static final int BIOMEMAP_VERSION = 2;
+
+    public void load(ProgressManager.ProgressBar bar) throws IOException {
+        bar.step("Heightmap");
         if (this.heightmap == null) {
             this.loadHeightmap();
         }
+        bar.step("Biomemap");
         if (this.biomemap == null) {
             this.loadBiomemap();
         }
     }
 
     public void loadHeightmap() throws IOException {
-        System.out.println("Loading Earth Heightmap...");
+        Earth.LOGGER.info("Loading Earth Heightmap...");
 
-        heightmap = DataMap.construct(HEIGHTMAP_LOCATION, true);
+        heightmap = DataMap.construct(HEIGHTMAP_LOCATION, true, HEIGHTMAP_VERSION);
     }
 
     public void loadBiomemap() throws IOException {
-        System.out.println("Loading Earth Biomemap...");
+        Earth.LOGGER.info("Loading Earth Biomemap...");
 
-        biomemap = DataMap.construct(BIOMEMAP_LOCATION, false);
+        biomemap = DataMap.construct(BIOMEMAP_LOCATION, false, BIOMEMAP_VERSION);
     }
 
     public int getHeightForCoords(int x, int z) {

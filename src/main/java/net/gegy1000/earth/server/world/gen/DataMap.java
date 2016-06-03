@@ -1,5 +1,8 @@
 package net.gegy1000.earth.server.world.gen;
 
+import net.gegy1000.earth.Earth;
+import net.minecraftforge.fml.common.ProgressManager;
+
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -11,33 +14,61 @@ public class DataMap {
     private final int WIDTH;
     private final int HEIGHT;
     private final FileChannel FILE_CHANNEL;
-    private final boolean OFFSET_BYTES;
+    private final boolean SIGNED;
+    private final int VERSION;
+
+    private static final File TEMP_DIR = new File(System.getProperty("java.io.tmpdir"), "earth_mod");
 
     private final Map<Integer, Byte> DATA_CACHE = new HashMap<Integer, Byte>();
 
-    private DataMap(int width, int height, FileChannel fileChannel, boolean offsetBytes) {
+    static {
+        TEMP_DIR.mkdir();
+    }
+
+    private DataMap(int width, int height, FileChannel fileChannel, boolean signed, int version) {
         this.WIDTH = width;
         this.HEIGHT = height;
         this.FILE_CHANNEL = fileChannel;
-        this.OFFSET_BYTES = offsetBytes;
+        this.SIGNED = signed;
+        this.VERSION = version;
     }
 
-    public static DataMap construct(String resource, boolean offsetBytes) throws IOException {
+    public static DataMap construct(String resource, boolean signed, int version) throws IOException {
         InputStream in = DataMap.class.getResourceAsStream(resource);
         String[] resourceFiles = resource.split("/");
-        String fileNameWithExtention = resourceFiles[resourceFiles.length - 1];
-        String[] fileNameExtensionSplit = fileNameWithExtention.split(Pattern.quote("."));
+        String fileName = resourceFiles[resourceFiles.length - 1];
 
-        File heightmapFile = createTempFile(fileNameExtensionSplit[0], fileNameExtensionSplit[1]);
-        copyFile(in, heightmapFile);
+        int tempVersion = -1;
+        File versionFile = getTempFile(fileName.split(Pattern.quote("."))[0] + ".version");
+        if (versionFile.exists()) {
+            BufferedReader versionIn = new BufferedReader(new FileReader(versionFile));
+            try {
+                tempVersion = Integer.parseInt(versionIn.readLine());
+            } catch (Exception e) {
+            }
+        }
 
-        RandomAccessFile randomAccessFile = new RandomAccessFile(heightmapFile, "r");
+        File tempFile = getTempFile(fileName);
+
+        if (tempVersion != version) {
+            tempFile = createTempFile(fileName);
+            copyFile(in, tempFile);
+            Earth.LOGGER.info(fileName + " was outdated. Updating.");
+            if (!versionFile.exists()) {
+                versionFile.createNewFile();
+            }
+            PrintWriter out = new PrintWriter(new FileWriter(versionFile));
+            out.print(version);
+            out.close();
+        }
+
+        RandomAccessFile randomAccessFile = new RandomAccessFile(tempFile, "r");
         FileChannel channel = randomAccessFile.getChannel();
 
         int width = readInteger(0, channel);
         int height = readInteger(4, channel);
 
-        return new DataMap(width, height, channel, offsetBytes);
+        return new DataMap(width, height, channel, signed, version);
     }
 
     public int getData(int x, int y) {
@@ -53,7 +84,7 @@ public class DataMap {
                 data = DATA_CACHE.get(position);
             }
 
-            if (OFFSET_BYTES) {
+            if (SIGNED) {
                 data += 128;
             }
 
@@ -107,7 +138,7 @@ public class DataMap {
         byte[] buffer = new byte[8024];
         int n;
 
-        while (-1 != (n = in.read(buffer))) {
+        while ((n = in.read(buffer)) != -1) {
             out.write(buffer, 0, n);
         }
 
@@ -115,15 +146,17 @@ public class DataMap {
         out.close();
     }
 
-    private static File createTempFile(String suffix, String format) throws IOException {
-        String tempDir = System.getProperty("java.io.tmpdir");
-
-        final File temp = new File(tempDir, "tempearthmod" + suffix + "." + format);
+    private static File createTempFile(String name) throws IOException {
+        final File temp = new File(TEMP_DIR, name);
 
         if (!(temp.exists()) && !(temp.createNewFile())) {
             throw new IOException("Could not create temp file: " + temp.getAbsolutePath());
         }
 
         return temp;
+    }
+
+    private static File getTempFile(String name) {
+        return new File(TEMP_DIR, name);
     }
 }

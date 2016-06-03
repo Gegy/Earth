@@ -40,11 +40,6 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
         this.WORLD = world;
         this.RANDOM = new Random(seed);
         this.EARTH_GEN = earthGen;
-        try {
-            this.EARTH_GEN.load();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public void setBlocksInChunk(int chunkX, int chunkZ, ChunkPrimer chunkPrimer) {

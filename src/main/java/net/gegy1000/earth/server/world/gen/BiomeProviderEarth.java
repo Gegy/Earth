@@ -27,11 +27,6 @@ public class BiomeProviderEarth extends BiomeProvider {
         this.SPAWN_BIOMES = Lists.newArrayList();
         this.SPAWN_BIOMES.addAll(allowedBiomes);
         this.GENERATOR = generator;
-        try {
-            generator.load();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     @Override

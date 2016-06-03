@@ -26,8 +26,8 @@ public class GuiStreetView extends GuiScreen {
     private String address;
 
     public GuiStreetView(final EntityPlayer player) {
-        latitude = Earth.generator.toLat(player.posZ);
-        longitude = Earth.generator.toLong(player.posX);
+        latitude = Earth.GENERATOR.toLat(player.posZ);
+        longitude = Earth.GENERATOR.toLong(player.posX);
 
         Thread downloadThread = new Thread(new Runnable() {
             @Override

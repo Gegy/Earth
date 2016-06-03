@@ -32,9 +32,9 @@ public class CommandTPLatLong extends CommandBase {
                 double latitude = Double.parseDouble(args[0]);
                 double longitude = Double.parseDouble(args[1]);
 
-                double x = Earth.generator.fromLong(longitude);
-                double z = Earth.generator.fromLat(latitude);
-                int y = Earth.generator.getHeightForCoords((int) x, (int) z) + 1;
+                double x = Earth.GENERATOR.fromLong(longitude);
+                double z = Earth.GENERATOR.fromLat(latitude);
+                int y = Earth.GENERATOR.getHeightForCoords((int) x, (int) z) + 1;
 
                 if (sender instanceof EntityPlayerMP) {
                     ((EntityPlayerMP) sender).connection.setPlayerLocation(x, y, z, 0, 0);

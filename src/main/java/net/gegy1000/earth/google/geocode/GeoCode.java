@@ -19,9 +19,13 @@ public class GeoCode {
         String req = "address=" + place.replaceAll(" ", "+");
         URL url = new URL("https://maps.googleapis.com/maps/api/geocode/json?" + req);
 
-        GeoCodeContainer.Location location = new Gson().fromJson(new InputStreamReader(url.openStream()), GeoCodeContainer.class).results[0].geometry.location;
+        GeoCodeContainer container = new Gson().fromJson(new InputStreamReader(url.openStream()), GeoCodeContainer.class);
 
-        return new GeoCode(location.lat, location.lng);
+        if (container.results != null && container.results.length > 0) {
+            GeoCodeContainer.Location location = container.results[0].geometry.location;
+            return new GeoCode(location.lat, location.lng);
+        }
+        return null;
     }
 
     public double getLatitude() {

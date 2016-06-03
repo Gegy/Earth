@@ -3,7 +3,6 @@ package net.gegy1000.earth;
 import net.gegy1000.earth.server.proxy.ServerProxy;
 import net.gegy1000.earth.server.world.gen.EarthGen;
 import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
-import net.minecraft.world.WorldType;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.ProgressManager;
 import net.minecraftforge.fml.common.SidedProxy;

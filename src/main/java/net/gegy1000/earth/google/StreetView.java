@@ -1,4 +1,4 @@
-package net.gegy1000.earth.google.streetview;
+package net.gegy1000.earth.google;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

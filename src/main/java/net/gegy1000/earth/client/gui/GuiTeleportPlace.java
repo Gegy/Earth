@@ -1,7 +1,7 @@
 package net.gegy1000.earth.client.gui;
 
 import net.gegy1000.earth.google.geocode.GeoCode;
-import net.gegy1000.earth.google.streetview.StreetView;
+import net.gegy1000.earth.google.StreetView;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;

@@ -1,6 +1,7 @@
 package net.gegy1000.earth.client.gui;
 
 import net.gegy1000.earth.Earth;
+import net.gegy1000.earth.google.SatelliteMap;
 import net.gegy1000.earth.google.geocode.ReverseGeoCode;
 import net.gegy1000.earth.google.StreetView;
 import net.minecraft.client.gui.GuiScreen;
@@ -17,7 +18,7 @@ import org.lwjgl.opengl.GL11;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
-public class GuiStreetView extends GuiScreen {
+public class GuiMap extends GuiScreen {
     private DynamicTexture dynamicTexture;
     private ResourceLocation location;
     private BufferedImage image;
@@ -25,7 +26,7 @@ public class GuiStreetView extends GuiScreen {
     private final double longitude;
     private String address;
 
-    public GuiStreetView(final EntityPlayer player) {
+    public GuiMap(final EntityPlayer player) {
         latitude = Earth.GENERATOR.toLat(player.posZ);
         longitude = Earth.GENERATOR.toLong(player.posX);
 
@@ -33,8 +34,8 @@ public class GuiStreetView extends GuiScreen {
             @Override
             public void run() {
                 try {
-                    StreetView streetView = StreetView.get(latitude, longitude, player.rotationYaw - 180, -player.rotationPitch);
-                    image = streetView.getImage();
+                    SatelliteMap satelliteMap = SatelliteMap.get(latitude, longitude);
+                    image = satelliteMap.getImage();
                     address = ReverseGeoCode.get(latitude, longitude).getFormattedAddress();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -59,7 +60,7 @@ public class GuiStreetView extends GuiScreen {
         if (dynamicTexture == null) {
             if (image != null) {
                 dynamicTexture = new DynamicTexture(image);
-                location = mc.getTextureManager().getDynamicTextureLocation("streetview_image", dynamicTexture);
+                location = mc.getTextureManager().getDynamicTextureLocation("sattelite_map", dynamicTexture);
             }
 
             fontRendererObj.drawStringWithShadow("Downloading Image...", 10, 10, 0xFF0000);

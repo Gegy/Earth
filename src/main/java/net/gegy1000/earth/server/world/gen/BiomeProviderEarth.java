@@ -20,9 +20,9 @@ public class BiomeProviderEarth extends BiomeProvider {
     private final BiomeCache BIOME_CACHE;
     private final List<Biome> SPAWN_BIOMES;
 
-    private final EarthGen GENERATOR;
+    private final EarthGenerator GENERATOR;
 
-    protected BiomeProviderEarth(EarthGen generator) {
+    protected BiomeProviderEarth(EarthGenerator generator) {
         this.BIOME_CACHE = new BiomeCache(this);
         this.SPAWN_BIOMES = Lists.newArrayList();
         this.SPAWN_BIOMES.addAll(allowedBiomes);
@@ -58,7 +58,7 @@ public class BiomeProviderEarth extends BiomeProvider {
         int i = 0;
         for (int partZ = 0; partZ < height; partZ++) {
             for (int partX = 0; partX < width; partX++) {
-                biomes[i] = getBiomeAt(partX + x, partZ + z);
+                biomes[i] = this.getBiomeAt(partX + x, partZ + z);
                 i++;
             }
         }
@@ -84,7 +84,7 @@ public class BiomeProviderEarth extends BiomeProvider {
             int i = 0;
             for (int partZ = 0; partZ < length; ++partZ) {
                 for (int partX = 0; partX < width; ++partX) {
-                    biomes[i] = getBiomeAt(partX + x, partZ + z);
+                    biomes[i] = this.getBiomeAt(partX + x, partZ + z);
                     i++;
                 }
             }
@@ -103,7 +103,7 @@ public class BiomeProviderEarth extends BiomeProvider {
         int length = maxZ - minZ + 1;
         for (int partZ = 0; partZ < length; ++partZ) {
             for (int partX = 0; partX < width; ++partX) {
-                Biome biome = getBiomeAt(partX + x, partZ + z);
+                Biome biome = this.getBiomeAt(partX + x, partZ + z);
                 if (!allowed.contains(biome)) {
                     return false;
                 }
@@ -128,7 +128,7 @@ public class BiomeProviderEarth extends BiomeProvider {
             for (int partX = 0; partX < width; ++partX) {
                 int chunkX = minX + i % width << 2;
                 int chunkZ = minZ + i / width << 2;
-                Biome biome = getBiomeAt(partX + x, partZ + z);
+                Biome biome = this.getBiomeAt(partX + x, partZ + z);
                 if (biomes.contains(biome) && (pos == null || random.nextInt(j2 + 1) == 0)) {
                     pos = new BlockPos(chunkX, 0, chunkZ);
                     ++j2;
@@ -140,7 +140,7 @@ public class BiomeProviderEarth extends BiomeProvider {
     }
 
     private Biome getBiomeAt(int x, int z) {
-        return GENERATOR.getBiomeForCoords(x, z);
+        return this.GENERATOR.getBiomeForCoords(x, z);
     }
 
     @Override
@@ -149,7 +149,7 @@ public class BiomeProviderEarth extends BiomeProvider {
     }
 
     @Override
-    public GenLayer[] getModdedBiomeerators(WorldType type, long seed, GenLayer[] original) {
+    public GenLayer[] getModdedBiomeGenerators(WorldType type, long seed, GenLayer[] original) {
         WorldTypeEvent.InitBiomeGens event = new WorldTypeEvent.InitBiomeGens(type, seed, original);
         MinecraftForge.TERRAIN_GEN_BUS.post(event);
         return event.getNewBiomeGens();

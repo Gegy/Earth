@@ -6,21 +6,26 @@ import net.minecraft.world.biome.BiomeProvider;
 import net.minecraft.world.chunk.IChunkGenerator;
 
 public class WorldTypeEarth extends WorldType {
-    private final EarthGen generator;
+    private final EarthGenerator generator;
 
-    public WorldTypeEarth(EarthGen generator) {
+    public WorldTypeEarth(EarthGenerator generator) {
         super("earth");
         this.generator = generator;
     }
 
     @Override
+    public double getHorizon(World world) {
+        return 20.0;
+    }
+
+    @Override
     public IChunkGenerator getChunkGenerator(World world, String generatorOptions) {
-        return new ChunkGeneratorEarth(world, world.getSeed(), generator);
+        return new ChunkGeneratorEarth(world, world.getSeed(), this.generator);
     }
 
     @Override
     public BiomeProvider getBiomeProvider(World world) {
-        return new BiomeProviderEarth(generator);
+        return new BiomeProviderEarth(this.generator);
     }
 
     @Override

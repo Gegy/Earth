@@ -1,9 +1,17 @@
 package net.gegy1000.earth.server.world.gen;
 
 import net.gegy1000.earth.Earth;
-import net.minecraftforge.fml.common.ProgressManager;
+import net.gegy1000.earth.server.util.TempFileUtil;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
@@ -17,13 +25,7 @@ public class DataMap {
     private final boolean SIGNED;
     private final int VERSION;
 
-    private static final File TEMP_DIR = new File(System.getProperty("java.io.tmpdir"), "earth_mod");
-
-    private final Map<Integer, Byte> DATA_CACHE = new HashMap<Integer, Byte>();
-
-    static {
-        TEMP_DIR.mkdir();
-    }
+    private final Map<Integer, Byte> DATA_CACHE = new HashMap<>();
 
     private DataMap(int width, int height, FileChannel fileChannel, boolean signed, int version) {
         this.WIDTH = width;
@@ -39,7 +41,7 @@ public class DataMap {
         String fileName = resourceFiles[resourceFiles.length - 1];
 
         int tempVersion = -1;
-        File versionFile = getTempFile(fileName.split(Pattern.quote("."))[0] + ".version");
+        File versionFile = TempFileUtil.getTempFile(fileName.split(Pattern.quote("."))[0] + ".version");
         if (versionFile.exists()) {
             BufferedReader versionIn = new BufferedReader(new FileReader(versionFile));
             try {
@@ -48,10 +50,10 @@ public class DataMap {
             }
         }
 
-        File tempFile = getTempFile(fileName);
+        File tempFile = TempFileUtil.getTempFile(fileName);
 
         if (tempVersion != version) {
-            tempFile = createTempFile(fileName);
+            tempFile = TempFileUtil.createTempFile(fileName);
             copyFile(in, tempFile);
             Earth.LOGGER.info(fileName + " was outdated. Updating.");
             if (!versionFile.exists()) {
@@ -73,18 +75,18 @@ public class DataMap {
 
     public int getData(int x, int y) {
         try {
-            int position = ((WIDTH * y) + x) + 8;
+            int position = ((this.WIDTH * y) + x) + 8;
 
             int data;
 
-            if (!DATA_CACHE.containsKey(position)) {
-                data = (int) readByte(position, FILE_CHANNEL);
-                DATA_CACHE.put(position, (byte) data);
+            if (!this.DATA_CACHE.containsKey(position)) {
+                data = (int) readByte(position, this.FILE_CHANNEL);
+                this.DATA_CACHE.put(position, (byte) data);
             } else {
-                data = DATA_CACHE.get(position);
+                data = this.DATA_CACHE.get(position);
             }
 
-            if (SIGNED) {
+            if (!this.SIGNED) {
                 data += 128;
             }
 
@@ -96,15 +98,15 @@ public class DataMap {
     }
 
     public int getWidth() {
-        return WIDTH;
+        return this.WIDTH;
     }
 
     public int getHeight() {
-        return HEIGHT;
+        return this.HEIGHT;
     }
 
     public void clearCache() {
-        DATA_CACHE.clear();
+        this.DATA_CACHE.clear();
     }
 
     private static byte readByte(int position, FileChannel channel) throws IOException {
@@ -144,19 +146,5 @@ public class DataMap {
 
         in.close();
         out.close();
-    }
-
-    private static File createTempFile(String name) throws IOException {
-        final File temp = new File(TEMP_DIR, name);
-
-        if (!(temp.exists()) && !(temp.createNewFile())) {
-            throw new IOException("Could not create temp file: " + temp.getAbsolutePath());
-        }
-
-        return temp;
-    }
-
-    private static File getTempFile(String name) {
-        return new File(TEMP_DIR, name);
     }
 }

@@ -20,10 +20,10 @@ public class ReverseGeoCode {
         Gson gson = new Gson();
         GeoCodeContainer container = gson.fromJson(new InputStreamReader(url.openStream()), GeoCodeContainer.class);
 
-        return new ReverseGeoCode(container.results[0].formatted_address);
+        return new ReverseGeoCode(container.results.length > 0 ? container.results[0].formatted_address : "Unknown");
     }
 
     public String getFormattedAddress() {
-        return formattedAddress;
+        return this.formattedAddress;
     }
 }

@@ -13,7 +13,7 @@ public class StreetView {
     }
 
     public BufferedImage getImage() {
-        return image;
+        return this.image;
     }
 
     public static StreetView get(double lat, double lon, float yaw, float pitch) throws IOException {

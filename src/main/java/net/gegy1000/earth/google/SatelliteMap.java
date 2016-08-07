@@ -13,7 +13,7 @@ public class SatelliteMap {
     }
 
     public BufferedImage getImage() {
-        return image;
+        return this.image;
     }
 
     public static SatelliteMap get(double lat, double lon) throws IOException {

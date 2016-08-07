@@ -11,13 +11,11 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.chunk.IChunkGenerator;
+import net.minecraft.world.gen.NoiseGeneratorPerlin;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.terraingen.ChunkGeneratorEvent;
 import net.minecraftforge.event.terraingen.PopulateChunkEvent;
 import net.minecraftforge.event.terraingen.TerrainGen;
-import net.minecraftforge.fml.common.eventhandler.Event.Result;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 
@@ -25,48 +23,50 @@ import static net.minecraftforge.event.terraingen.PopulateChunkEvent.Populate.Ev
 import static net.minecraftforge.event.terraingen.PopulateChunkEvent.Populate.EventType.ICE;
 
 public class ChunkGeneratorEarth implements IChunkGenerator {
-    private final Random RANDOM;
-    private final World WORLD;
+    private final Random random;
+    private final World world;
 
     private Biome[] biomesForGeneration;
 
-    private final EarthGen EARTH_GEN;
+    private final EarthGenerator earthGenerator;
 
     private static final IBlockState STONE_BLOCK = Blocks.STONE.getDefaultState();
     private static final IBlockState LIQUID_BLOCK = Blocks.WATER.getDefaultState();
-    private static final int OCEAN_HEIGHT = 59;
+    private static final int OCEAN_HEIGHT = 21;
 
-    public ChunkGeneratorEarth(World world, long seed, EarthGen earthGen) {
-        this.WORLD = world;
-        this.RANDOM = new Random(seed);
-        this.EARTH_GEN = earthGen;
+    private NoiseGeneratorPerlin surfaceNoise;
+    private double[] depthBuffer = new double[256];
+
+    public ChunkGeneratorEarth(World world, long seed, EarthGenerator earthGenerator) {
+        this.world = world;
+        this.world.setSeaLevel(OCEAN_HEIGHT);
+        this.random = new Random(seed);
+        this.earthGenerator = earthGenerator;
+        this.surfaceNoise = new NoiseGeneratorPerlin(this.random, 4);
     }
 
     public void setBlocksInChunk(int chunkX, int chunkZ, ChunkPrimer chunkPrimer) {
-        this.biomesForGeneration = this.WORLD.getBiomeProvider().getBiomesForGeneration(this.biomesForGeneration, chunkX * 4 - 2, chunkZ * 4 - 2, 10, 10);
+        this.biomesForGeneration = this.world.getBiomeProvider().getBiomesForGeneration(this.biomesForGeneration, chunkX * 4 - 2, chunkZ * 4 - 2, 10, 10);
         int chunkWorldX = chunkX * 16;
         int chunkWorldZ = chunkZ * 16;
-        IBlockState stoneBlock = STONE_BLOCK;
-        IBlockState liquidBlock = LIQUID_BLOCK;
         IBlockState bedrock = Blocks.BEDROCK.getDefaultState();
-        int oceanHeight = OCEAN_HEIGHT;
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-                int height = (EARTH_GEN.getHeightForCoords(x + chunkWorldX, z + chunkWorldZ));
+                int height = (this.earthGenerator.getHeightForCoords(x + chunkWorldX, z + chunkWorldZ));
                 chunkPrimer.setBlockState(x, 0, z, bedrock);
-                for (int y = 1; y < height; y++) {
-                    chunkPrimer.setBlockState(x, y, z, stoneBlock);
+                for (int y = 1; y <= height; y++) {
+                    chunkPrimer.setBlockState(x, y, z, STONE_BLOCK);
                 }
-                if (height < oceanHeight) {
-                    for (int y = height + 1; y <= oceanHeight; y++) {
-                        chunkPrimer.setBlockState(x, y, z, liquidBlock);
+                if (height < OCEAN_HEIGHT) {
+                    for (int y = height + 1; y <= OCEAN_HEIGHT; y++) {
+                        chunkPrimer.setBlockState(x, y, z, LIQUID_BLOCK);
                     }
                 }
             }
         }
     }
 
-    public void generateGrass(int chunkX, int chunkZ, ChunkPrimer chunkPrimer, Biome[] biomes) {
+    /*public void generateGrass(int chunkX, int chunkZ, ChunkPrimer chunkPrimer, Biome[] biomes) {
         ChunkGeneratorEvent.ReplaceBiomeBlocks event = new ChunkGeneratorEvent.ReplaceBiomeBlocks(this, chunkX, chunkZ, chunkPrimer, this.WORLD);
         MinecraftForge.EVENT_BUS.post(event);
         if (event.getResult() == Result.DENY) {
@@ -74,6 +74,7 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
         }
         int worldChunkX = chunkX * 16;
         int worldChunkZ = chunkZ * 16;
+        IBlockState sand = Blocks.SAND.getDefaultState();
         IBlockState bedrock = Blocks.BEDROCK.getDefaultState();
         for (int x = 0; x < 16; ++x) {
             for (int z = 0; z < 16; ++z) {
@@ -83,8 +84,12 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
                     IBlockState fillerBlock = biome.fillerBlock;
                     int surfaceDepth = 0;
                     int height = this.EARTH_GEN.getHeightForCoords(x + worldChunkX, z + worldChunkZ);
+                    if (height < 59) {
+                        topBlock = sand;
+                        fillerBlock = topBlock;
+                    }
                     for (int y = height; y >= 0; y--) {
-                        if (y > 0 && y < 5 && y <= RANDOM.nextInt(5)) {
+                        if (y > 0 && y < 5 && y <= this.RANDOM.nextInt(5)) {
                             chunkPrimer.setBlockState(x, y, z, bedrock);
                         } else {
                             if (surfaceDepth == 0) {
@@ -100,17 +105,28 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
                 }
             }
         }
+    }*/
+
+    public void generateBiomeBlocks(int chunkX, int chunkZ, ChunkPrimer primer, Biome[] biomes) {
+        MockChunkPrimer mockPrimer = new MockChunkPrimer(primer, 62 - OCEAN_HEIGHT);
+        double scale = 0.03125D;
+        this.depthBuffer = this.surfaceNoise.getRegion(this.depthBuffer, chunkX * 16, chunkZ * 16, 16, 16, scale * 2.0D, scale * 2.0D, 1.0D);
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                Biome biome = biomes[z + x * 16];
+                biome.genTerrainBlocks(this.world, this.random, mockPrimer, chunkX * 16 + x, chunkZ * 16 + z, this.depthBuffer[z + x * 16]);
+            }
+        }
     }
 
     @Override
     public Chunk provideChunk(int x, int z) {
-        this.RANDOM.setSeed((long) x * 341873128712L + (long) z * 132897987541L);
+        this.random.setSeed((long) x * 341873128712L + (long) z * 132897987541L);
         ChunkPrimer primer = new ChunkPrimer();
         this.setBlocksInChunk(x, z, primer);
-        this.biomesForGeneration = this.WORLD.getBiomeProvider().loadBlockGeneratorData(this.biomesForGeneration, x * 16, z * 16, 16, 16);
-        this.generateGrass(x, z, primer, this.biomesForGeneration);
-
-        Chunk chunk = new Chunk(this.WORLD, primer, x, z);
+        this.biomesForGeneration = this.world.getBiomeProvider().loadBlockGeneratorData(this.biomesForGeneration, x * 16, z * 16, 16, 16);
+        this.generateBiomeBlocks(x, z, primer, this.biomesForGeneration);
+        Chunk chunk = new Chunk(this.world, primer, x, z);
 
         byte[] biomeArray = chunk.getBiomeArray();
 
@@ -120,7 +136,7 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
 
         chunk.generateSkylightMap();
 
-        EARTH_GEN.clearCache();
+        this.earthGenerator.clearCache();
 
         return chunk;
     }
@@ -136,44 +152,44 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
         int x = chunkX * 16;
         int z = chunkZ * 16;
         BlockPos pos = new BlockPos(x, 0, z);
-        Biome biome = this.WORLD.getBiomeGenForCoords(pos.add(16, 0, 16));
-        this.RANDOM.setSeed(this.WORLD.getSeed());
-        long i1 = this.RANDOM.nextLong() / 2L * 2L + 1L;
-        long j1 = this.RANDOM.nextLong() / 2L * 2L + 1L;
-        this.RANDOM.setSeed((long) chunkX * i1 + (long) chunkZ * j1 ^ this.WORLD.getSeed());
+        Biome biome = this.world.getBiomeGenForCoords(pos.add(16, 0, 16));
+        this.random.setSeed(this.world.getSeed());
+        long i1 = this.random.nextLong() / 2L * 2L + 1L;
+        long j1 = this.random.nextLong() / 2L * 2L + 1L;
+        this.random.setSeed((long) chunkX * i1 + (long) chunkZ * j1 ^ this.world.getSeed());
         boolean hasVillageGenerated = false;
 
-        MinecraftForge.EVENT_BUS.post(new PopulateChunkEvent.Pre(this, WORLD, RANDOM, chunkX, chunkZ, hasVillageGenerated));
+        MinecraftForge.EVENT_BUS.post(new PopulateChunkEvent.Pre(this, this.world, this.random, chunkX, chunkZ, hasVillageGenerated));
 
-        biome.decorate(this.WORLD, this.RANDOM, new BlockPos(x, 0, z));
-        if (TerrainGen.populate(this, WORLD, RANDOM, chunkX, chunkZ, hasVillageGenerated, ANIMALS)) {
-            WorldEntitySpawner.performWorldGenSpawning(this.WORLD, biome, x + 8, z + 8, 16, 16, this.RANDOM);
+        biome.decorate(this.world, this.random, new BlockPos(x, 0, z));
+        if (TerrainGen.populate(this, this.world, this.random, chunkX, chunkZ, hasVillageGenerated, ANIMALS)) {
+            WorldEntitySpawner.performWorldGenSpawning(this.world, biome, x + 8, z + 8, 16, 16, this.random);
         }
         pos = pos.add(8, 0, 8);
 
-        boolean freeze = TerrainGen.populate(this, WORLD, RANDOM, chunkX, chunkZ, hasVillageGenerated, ICE);
+        boolean freeze = TerrainGen.populate(this, this.world, this.random, chunkX, chunkZ, hasVillageGenerated, ICE);
         for (int xOffset = 0; freeze && xOffset < 16; ++xOffset) {
             for (int zOffset = 0; zOffset < 16; ++zOffset) {
-                BlockPos top = this.WORLD.getPrecipitationHeight(pos.add(xOffset, 0, zOffset));
+                BlockPos top = this.world.getPrecipitationHeight(pos.add(xOffset, 0, zOffset));
                 BlockPos ground = top.down();
 
-                if (this.WORLD.canBlockFreezeWater(ground)) {
-                    this.WORLD.setBlockState(ground, Blocks.ICE.getDefaultState(), 2);
+                if (this.world.canBlockFreezeWater(ground)) {
+                    this.world.setBlockState(ground, Blocks.ICE.getDefaultState(), 2);
                 }
 
-                if (this.WORLD.canSnowAt(top, true)) {
-                    this.WORLD.setBlockState(top, Blocks.SNOW_LAYER.getDefaultState(), 2);
+                if (this.world.canSnowAt(top, true)) {
+                    this.world.setBlockState(top, Blocks.SNOW_LAYER.getDefaultState(), 2);
                 }
             }
         }
-        MinecraftForge.EVENT_BUS.post(new PopulateChunkEvent.Post(this, WORLD, RANDOM, chunkX, chunkZ, hasVillageGenerated));
+        MinecraftForge.EVENT_BUS.post(new PopulateChunkEvent.Post(this, this.world, this.random, chunkX, chunkZ, hasVillageGenerated));
 
         BlockFalling.fallInstantly = false;
     }
 
     @Override
     public List<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType creatureType, BlockPos pos) {
-        return WORLD.getBiomeGenForCoords(pos).getSpawnableList(creatureType);
+        return this.world.getBiomeGenForCoords(pos).getSpawnableList(creatureType);
     }
 
     @Override

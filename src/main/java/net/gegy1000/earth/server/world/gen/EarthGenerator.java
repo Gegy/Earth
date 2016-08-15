@@ -12,21 +12,21 @@ import java.util.Map;
 import java.util.Random;
 
 public class EarthGenerator {
-    private DataMap heightmap;
-    private DataMap biomemap;
+    protected DataMap heightmap;
+    protected DataMap biomemap;
 
-    private static final String HEIGHTMAP_LOCATION = "/assets/earth/data/earth_heightmap.mchmap";
-    private static final String BIOMEMAP_LOCATION = "/assets/earth/data/earth_biomemap.mcbmap";
+    protected static final String HEIGHTMAP_LOCATION = "/assets/earth/data/earth_heightmap.mchmap";
+    protected static final String BIOMEMAP_LOCATION = "/assets/earth/data/earth_biomemap.mcbmap";
 
-    private static final double WORLD_SCALE = 15.0;
+    protected static final double WORLD_SCALE = 15.0; //TODO 20
 
-    private static final int WORLD_OFFSET_X = 21600;
-    private static final int WORLD_OFFSET_Z = 10800;
+    protected static final int WORLD_OFFSET_X = 21600;
+    protected static final int WORLD_OFFSET_Z = 10800;
 
-    public static final Biome DEFAULT_BIOME = Biomes.OCEAN;
+    protected static final Biome DEFAULT_BIOME = Biomes.OCEAN;
 
-    public static final int HEIGHTMAP_VERSION = 1;
-    public static final int BIOMEMAP_VERSION = 4;
+    protected static final int HEIGHTMAP_VERSION = 1;
+    protected static final int BIOMEMAP_VERSION = 4;
 
     public void load(ProgressManager.ProgressBar bar) throws IOException {
         bar.step("Heightmap");
@@ -41,13 +41,11 @@ public class EarthGenerator {
 
     public void loadHeightmap() throws IOException {
         Earth.LOGGER.info("Loading Earth Heightmap...");
-
         this.heightmap = DataMap.construct(HEIGHTMAP_LOCATION, false, HEIGHTMAP_VERSION);
     }
 
     public void loadBiomemap() throws IOException {
         Earth.LOGGER.info("Loading Earth Biomemap...");
-
         this.biomemap = DataMap.construct(BIOMEMAP_LOCATION, true, BIOMEMAP_VERSION);
     }
 
@@ -55,11 +53,13 @@ public class EarthGenerator {
         int width = this.heightmap.getWidth();
         int height = this.biomemap.getHeight();
 
-        int scaledWidth = (int) (width * WORLD_SCALE);
-        int scaledHeight = (int) (height * WORLD_SCALE);
+        double worldScale = this.getWorldScale();
 
-        x += (WORLD_OFFSET_X * WORLD_SCALE);
-        z += (WORLD_OFFSET_Z * WORLD_SCALE);
+        int scaledWidth = (int) (width * worldScale);
+        int scaledHeight = (int) (height * worldScale);
+
+        x += (WORLD_OFFSET_X * worldScale);
+        z += (WORLD_OFFSET_Z * worldScale);
 
         double[][] buffer = new double[4][4];
 
@@ -86,11 +86,13 @@ public class EarthGenerator {
         int width = this.biomemap.getWidth();
         int height = this.biomemap.getHeight();
 
-        int scaledWidth = (int) (width * WORLD_SCALE);
-        int scaledHeight = (int) (height * WORLD_SCALE);
+        double worldScale = this.getWorldScale();
 
-        x += (WORLD_OFFSET_X * WORLD_SCALE);
-        z += (WORLD_OFFSET_Z * WORLD_SCALE);
+        int scaledWidth = (int) (width * worldScale);
+        int scaledHeight = (int) (height * worldScale);
+
+        x += (WORLD_OFFSET_X * worldScale);
+        z += (WORLD_OFFSET_Z * worldScale);
 
         if (x < 0 || z < 0 || x >= scaledWidth || z >= scaledHeight) {
             return DEFAULT_BIOME;
@@ -176,8 +178,8 @@ public class EarthGenerator {
         this.biomemap.clearCache();
     }
 
-    private static class Bicubic {
-        private static final ThreadLocal<double[]> ARR_THREADSAFE = new ThreadLocal<double[]>() {
+    protected static class Bicubic {
+        protected static final ThreadLocal<double[]> ARR_THREADSAFE = new ThreadLocal<double[]>() {
             @Override
             protected double[] initialValue() {
                 return new double[4];
@@ -221,24 +223,27 @@ public class EarthGenerator {
     }
 
     public double toLat(double z) {
-        return 90.0 - (((z + (WORLD_OFFSET_Z * WORLD_SCALE)) / (this.heightmap.getHeight() * WORLD_SCALE)) * 180.0);
+        return 90.0 - (((z + (WORLD_OFFSET_Z * this.getWorldScale())) / (this.heightmap.getHeight() * this.getWorldScale())) * 180.0);
     }
 
     public double toLong(double x) {
-        return (((x + (WORLD_OFFSET_X * WORLD_SCALE)) / (this.heightmap.getWidth() * WORLD_SCALE)) * 360.0) - 180.0;
+        return (((x + (WORLD_OFFSET_X * this.getWorldScale())) / (this.heightmap.getWidth() * this.getWorldScale())) * 360.0) - 180.0;
     }
 
     public double fromLat(double lat) {
         int height = this.heightmap.getHeight();
-
-        double scale = WORLD_SCALE;
+        double scale = this.getWorldScale();
         double scaledZ = height - ((lat + 90.0) / 180.0 * (double) height);
         return (scaledZ - WORLD_OFFSET_Z) * scale;
     }
 
     public double fromLong(double longitude) {
-        double scale = WORLD_SCALE;
+        double scale = this.getWorldScale();
         double scaledX = ((longitude + 180.0) / 360.0 * (double) this.heightmap.getWidth());
         return (scaledX - WORLD_OFFSET_X) * scale;
+    }
+
+    protected double getWorldScale() {
+        return WORLD_SCALE;
     }
 }

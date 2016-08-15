@@ -1,6 +1,9 @@
 package net.gegy1000.earth.google;
 
 import net.gegy1000.earth.client.map.MapOverlayHandler;
+import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.WorldType;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -20,9 +23,13 @@ public class MapOverlayTile {
 
     public static MapOverlayTile get(double lat, double lon) throws IOException {
         int size = MapOverlayHandler.BASE_RES * MapOverlayHandler.DOWNLOAD_SCALE;
-        String req = "size=" + size + "x" + size + "&center=" + lat + "," + lon + "&zoom=16";
+        WorldType worldType = Minecraft.getMinecraft().theWorld.getWorldType();
+        int zoom = 16;
+        if (worldType instanceof WorldTypeEarth) {
+            zoom = ((WorldTypeEarth) worldType).getMapZoom();
+        }
+        String req = "size=" + size + "x" + size + "&center=" + lat + "," + lon + "&zoom=" + zoom;
         URL url = new URL("https://maps.googleapis.com/maps/api/staticmap?" + req);
-
         return new MapOverlayTile(ImageIO.read(url.openStream()));
     }
 }

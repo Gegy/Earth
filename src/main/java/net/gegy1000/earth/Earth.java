@@ -35,7 +35,7 @@ public class Earth {
         }
         ProgressManager.pop(bar);
 
-        new WorldTypeEarth(GENERATOR);
+        new WorldTypeEarth("earth", GENERATOR);
 
         proxy.preInit();
     }

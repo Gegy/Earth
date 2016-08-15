@@ -51,6 +51,11 @@ processResources {
     }
 }
 
+task devJar(type: Jar) {
+    classifier = "dev"
+    from sourceSets.main.output
+}
+
 String getModFile() {
     String path = "";
     FileTree tree = fileTree(dir: 'src/main/java')

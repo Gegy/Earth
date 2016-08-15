@@ -4,6 +4,9 @@ import net.gegy1000.earth.Earth;
 import net.gegy1000.earth.client.texture.AdvancedDynamicTexture;
 import net.gegy1000.earth.google.MapOverlayTile;
 import net.gegy1000.earth.server.util.TempFileUtil;
+import net.gegy1000.earth.server.world.gen.EarthGenerator;
+import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
+import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos;
 
 import javax.imageio.ImageIO;
@@ -19,6 +22,8 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 public class MapOverlayHandler {
     public static final Map<BlockPos, AdvancedDynamicTexture> TILES = new HashMap<>();
+
+    private static final Minecraft MC = Minecraft.getMinecraft();
 
     private static final Queue<BlockPos> WRITE_QUEUE = new LinkedBlockingDeque<>();
     private static final Queue<BlockPos> READ_QUEUE = new LinkedBlockingDeque<>();
@@ -72,48 +77,52 @@ public class MapOverlayHandler {
 
     private static final Thread DOWNLOAD_THREAD = new Thread(() -> {
         while (true) {
-            BlockPos pos = null;
-            synchronized (DOWNLOAD_QUEUE) {
-                if (DOWNLOAD_QUEUE.size() > 0) {
-                    pos = DOWNLOAD_QUEUE.poll();
-                }
-            }
-            if (pos != null) {
-                try {
-                    MapOverlayTile downloadedTile = MapOverlayTile.get(Earth.GENERATOR.toLat(pos.getZ() + (DOWNLOAD_SCALE / 2.0)), Earth.GENERATOR.toLong(pos.getX() + (DOWNLOAD_SCALE / 2.0)));
-                    BufferedImage downloadedImage = downloadedTile.getImage();
-                    int zoomX = 300;
-                    int zoomY = 257;
-                    int width = downloadedImage.getWidth() - zoomX;
-                    int height = downloadedImage.getHeight() - zoomY;
-                    int halfZoomX = zoomX / 2;
-                    int halfZoomY = zoomY / 2;
-                    BufferedImage zoomedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-                    for (int x = halfZoomX; x < width + halfZoomX; x++) {
-                        for (int y = halfZoomY; y < height + halfZoomY; y++) {
-                            zoomedImage.setRGB(x - halfZoomX, y - halfZoomY, downloadedImage.getRGB(x, y));
-                        }
+            if (MC.theWorld != null && MC.theWorld.getWorldType() instanceof WorldTypeEarth) {
+                BlockPos pos = null;
+                synchronized (DOWNLOAD_QUEUE) {
+                    if (DOWNLOAD_QUEUE.size() > 0) {
+                        pos = DOWNLOAD_QUEUE.poll();
                     }
-                    for (int xOffset = 0; xOffset < DOWNLOAD_SCALE; xOffset++) {
-                        for (int yOffset = 0; yOffset < DOWNLOAD_SCALE; yOffset++) {
-                            int sectionWidth = width / DOWNLOAD_SCALE;
-                            int sectionHeight = height / DOWNLOAD_SCALE;
-                            BufferedImage tile = new BufferedImage(sectionWidth, sectionHeight, BufferedImage.TYPE_INT_ARGB);
-                            int startX = xOffset * sectionWidth;
-                            int startY = yOffset * sectionHeight;
-                            for (int x = startX; x < startX + sectionWidth; x++) {
-                                for (int y = startY; y < startY + sectionHeight; y++) {
-                                    tile.setRGB(x - startX, y - startY, zoomedImage.getRGB(x, y));
+                }
+                if (pos != null) {
+                    try {
+                        EarthGenerator generator = WorldTypeEarth.getGenerator(MC.theWorld);
+                        MapOverlayTile downloadedTile = MapOverlayTile.get(generator.toLat(pos.getZ() + (DOWNLOAD_SCALE / 2.0)), generator.toLong(pos.getX() + (DOWNLOAD_SCALE / 2.0)));
+                        BufferedImage downloadedImage = downloadedTile.getImage();
+                        WorldTypeEarth worldType = (WorldTypeEarth) MC.theWorld.getWorldType();
+                        int zoomX = worldType.getMapZoomX();
+                        int zoomY = worldType.getMapZoomY();
+                        int width = downloadedImage.getWidth() - zoomX;
+                        int height = downloadedImage.getHeight() - zoomY;
+                        int halfZoomX = zoomX / 2;
+                        int halfZoomY = zoomY / 2;
+                        BufferedImage zoomedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                        for (int x = halfZoomX; x < width + halfZoomX; x++) {
+                            for (int y = halfZoomY; y < height + halfZoomY; y++) {
+                                zoomedImage.setRGB(x - halfZoomX, y - halfZoomY, downloadedImage.getRGB(x, y));
+                            }
+                        }
+                        for (int xOffset = 0; xOffset < DOWNLOAD_SCALE; xOffset++) {
+                            for (int yOffset = 0; yOffset < DOWNLOAD_SCALE; yOffset++) {
+                                int sectionWidth = width / DOWNLOAD_SCALE;
+                                int sectionHeight = height / DOWNLOAD_SCALE;
+                                BufferedImage tile = new BufferedImage(sectionWidth, sectionHeight, BufferedImage.TYPE_INT_ARGB);
+                                int startX = xOffset * sectionWidth;
+                                int startY = yOffset * sectionHeight;
+                                for (int x = startX; x < startX + sectionWidth; x++) {
+                                    for (int y = startY; y < startY + sectionHeight; y++) {
+                                        tile.setRGB(x - startX, y - startY, zoomedImage.getRGB(x, y));
+                                    }
+                                }
+                                BlockPos tilePos = new BlockPos(pos.add(xOffset, 0, yOffset));
+                                synchronized (UNLOADED_IMAGES) {
+                                    UNLOADED_IMAGES.put(tilePos, tile);
                                 }
                             }
-                            BlockPos tilePos = new BlockPos(pos.add(xOffset, 0, yOffset));
-                            synchronized (UNLOADED_IMAGES) {
-                                UNLOADED_IMAGES.put(tilePos, tile);
-                            }
                         }
+                    } catch (IOException e) {
+                        failedDownload = true;
                     }
-                } catch (IOException e) {
-                    failedDownload = true;
                 }
             }
         }
@@ -189,11 +198,6 @@ public class MapOverlayHandler {
     }
 
     private static String getTileFileName(BlockPos pos) {
-        StringBuilder builder = new StringBuilder("map_overlay/");
-        builder.append(pos.getX());
-        builder.append("_");
-        builder.append(pos.getZ());
-        builder.append(".png");
-        return builder.toString();
+        return "map_overlay/" + pos.getX() + "_" + pos.getZ() + ".png";
     }
 }

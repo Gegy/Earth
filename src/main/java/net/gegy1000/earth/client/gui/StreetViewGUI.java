@@ -1,9 +1,10 @@
 package net.gegy1000.earth.client.gui;
 
-import net.gegy1000.earth.Earth;
 import net.gegy1000.earth.client.texture.AdvancedDynamicTexture;
 import net.gegy1000.earth.google.StreetView;
 import net.gegy1000.earth.google.geocode.ReverseGeoCode;
+import net.gegy1000.earth.server.world.gen.EarthGenerator;
+import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
@@ -24,8 +25,9 @@ public class StreetViewGUI extends GuiScreen {
     private String address;
 
     public StreetViewGUI(final EntityPlayer player) {
-        this.latitude = Earth.GENERATOR.toLat(player.posZ);
-        this.longitude = Earth.GENERATOR.toLong(player.posX);
+        EarthGenerator generator = WorldTypeEarth.getGenerator(player.worldObj);
+        this.latitude = generator.toLat(player.posZ);
+        this.longitude = generator.toLong(player.posX);
 
         Thread downloadThread = new Thread(() -> {
             try {

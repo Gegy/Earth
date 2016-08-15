@@ -22,7 +22,7 @@ public class BiomeProviderEarth extends BiomeProvider {
 
     private final EarthGenerator GENERATOR;
 
-    protected BiomeProviderEarth(EarthGenerator generator) {
+    public BiomeProviderEarth(EarthGenerator generator) {
         this.BIOME_CACHE = new BiomeCache(this);
         this.SPAWN_BIOMES = Lists.newArrayList();
         this.SPAWN_BIOMES.addAll(allowedBiomes);

@@ -1,6 +1,5 @@
 package net.gegy1000.earth.client.map;
 
-import net.gegy1000.earth.Earth;
 import net.gegy1000.earth.client.texture.AdvancedDynamicTexture;
 import net.gegy1000.earth.google.MapOverlayTile;
 import net.gegy1000.earth.server.util.TempFileUtil;
@@ -8,6 +7,7 @@ import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -33,7 +33,6 @@ public class MapOverlayHandler {
     private static final Set<BlockPos> CACHE_INDEX = new HashSet<>();
 
     public static final int BASE_RES = 64;
-    public static final int DOWNLOAD_SCALE = 8;
 
     private static boolean indexing = false;
 
@@ -41,15 +40,16 @@ public class MapOverlayHandler {
 
     private static final Thread WRITE_THREAD = new Thread(() -> {
         while (true) {
-            synchronized (WRITE_QUEUE) {
-                while (WRITE_QUEUE.size() > 0) {
-                    BlockPos pos = WRITE_QUEUE.poll();
-                    AdvancedDynamicTexture tile = TILES.get(pos);
-                    if (tile != null) {
-                        try {
-                            ImageIO.write(tile.toBufferedImage(), "png", TempFileUtil.createTempFile(getTileFileName(pos)));
-                        } catch (IOException e) {
-                        }
+            while (WRITE_QUEUE.size() > 0) {
+                BlockPos pos = null;
+                synchronized (WRITE_QUEUE) {
+                    pos = WRITE_QUEUE.poll();
+                }
+                AdvancedDynamicTexture tile = TILES.get(pos);
+                if (tile != null) {
+                    try {
+                        ImageIO.write(tile.toBufferedImage(), "png", TempFileUtil.createTempFile(getTileFileName(pos)));
+                    } catch (IOException e) {
                     }
                 }
             }
@@ -87,7 +87,8 @@ public class MapOverlayHandler {
                 if (pos != null) {
                     try {
                         EarthGenerator generator = WorldTypeEarth.getGenerator(MC.theWorld);
-                        MapOverlayTile downloadedTile = MapOverlayTile.get(generator.toLat(pos.getZ() + (DOWNLOAD_SCALE / 2.0)), generator.toLong(pos.getX() + (DOWNLOAD_SCALE / 2.0)));
+                        int downloadScale = getDownloadScale(MC.theWorld);
+                        MapOverlayTile downloadedTile = MapOverlayTile.get(generator.toLat(pos.getZ() + (downloadScale / 2.0)), generator.toLong(pos.getX() + (downloadScale / 2.0)));
                         BufferedImage downloadedImage = downloadedTile.getImage();
                         WorldTypeEarth worldType = (WorldTypeEarth) MC.theWorld.getWorldType();
                         int zoomX = worldType.getMapZoomX();
@@ -102,10 +103,10 @@ public class MapOverlayHandler {
                                 zoomedImage.setRGB(x - halfZoomX, y - halfZoomY, downloadedImage.getRGB(x, y));
                             }
                         }
-                        for (int xOffset = 0; xOffset < DOWNLOAD_SCALE; xOffset++) {
-                            for (int yOffset = 0; yOffset < DOWNLOAD_SCALE; yOffset++) {
-                                int sectionWidth = width / DOWNLOAD_SCALE;
-                                int sectionHeight = height / DOWNLOAD_SCALE;
+                        for (int xOffset = 0; xOffset < downloadScale; xOffset++) {
+                            for (int yOffset = 0; yOffset < downloadScale; yOffset++) {
+                                int sectionWidth = width / downloadScale;
+                                int sectionHeight = height / downloadScale;
                                 BufferedImage tile = new BufferedImage(sectionWidth, sectionHeight, BufferedImage.TYPE_INT_ARGB);
                                 int startX = xOffset * sectionWidth;
                                 int startY = yOffset * sectionHeight;
@@ -127,6 +128,13 @@ public class MapOverlayHandler {
             }
         }
     });
+
+    private static int getDownloadScale(World world) {
+        if (world.getWorldType() instanceof WorldTypeEarth) {
+            return ((WorldTypeEarth) world.getWorldType()).getMapDownloadScale();
+        }
+        return 8;
+    }
 
     private static final Thread INDEX_CACHE = new Thread(() -> {
         while (true) {
@@ -164,17 +172,19 @@ public class MapOverlayHandler {
     }
 
     public static void update() {
-        synchronized (UNLOADED_IMAGES) {
-            for (Map.Entry<BlockPos, BufferedImage> entry : UNLOADED_IMAGES.entrySet()) {
-                BlockPos pos = entry.getKey();
-                synchronized (TILES) {
-                    TILES.put(pos, new AdvancedDynamicTexture(pos.getX() + "_" + pos.getZ(), entry.getValue()));
+        if (UNLOADED_IMAGES.size() > 0) {
+            synchronized (UNLOADED_IMAGES) {
+                for (Map.Entry<BlockPos, BufferedImage> entry : UNLOADED_IMAGES.entrySet()) {
+                    BlockPos pos = entry.getKey();
+                    synchronized (TILES) {
+                        TILES.put(pos, new AdvancedDynamicTexture(pos.getX() + "_" + pos.getZ(), entry.getValue()));
+                    }
+                    synchronized (WRITE_QUEUE) {
+                        WRITE_QUEUE.add(pos);
+                    }
                 }
-                synchronized (WRITE_QUEUE) {
-                    WRITE_QUEUE.add(pos);
-                }
+                UNLOADED_IMAGES.clear();
             }
-            UNLOADED_IMAGES.clear();
         }
     }
 
@@ -188,13 +198,27 @@ public class MapOverlayHandler {
                         READ_QUEUE.add(pos);
                     }
                 }
-            } else if (!failedDownload && pos.getX() % DOWNLOAD_SCALE == 0 && pos.getZ() % DOWNLOAD_SCALE == 0 && !DOWNLOAD_QUEUE.contains(pos)) {
-                synchronized (DOWNLOAD_QUEUE) {
-                    DOWNLOAD_QUEUE.add(pos);
+            } else {
+                if (!failedDownload) {
+                    int downloadScale = getDownloadScale(MC.theWorld);
+                    BlockPos corner = new BlockPos(pos.getX() - modulus(pos.getX(), downloadScale), 0, pos.getZ() - modulus(pos.getZ(), downloadScale));
+                    if (!DOWNLOAD_QUEUE.contains(corner)) {
+                        synchronized (DOWNLOAD_QUEUE) {
+                            DOWNLOAD_QUEUE.add(corner);
+                        }
+                    }
                 }
             }
         }
         return tile;
+    }
+
+    private static int modulus(int n, int d) {
+        int modulus = n % d;
+        if (modulus < 0) {
+            modulus += d;
+        }
+        return modulus;
     }
 
     private static String getTileFileName(BlockPos pos) {

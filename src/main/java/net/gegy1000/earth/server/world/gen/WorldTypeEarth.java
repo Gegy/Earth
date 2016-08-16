@@ -53,4 +53,8 @@ public class WorldTypeEarth extends WorldType {
     public int getMapZoom() {
         return 16;
     }
+
+    public int getMapDownloadScale() {
+        return 8;
+    }
 }

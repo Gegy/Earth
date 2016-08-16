@@ -24,7 +24,7 @@ public class MapOverlayTile {
     public static MapOverlayTile get(double lat, double lon) throws IOException {
         int size = MapOverlayHandler.BASE_RES * 8;
         WorldType worldType = Minecraft.getMinecraft().theWorld.getWorldType();
-        int zoom = 16;
+        int zoom = 8;
         if (worldType instanceof WorldTypeEarth) {
             zoom = ((WorldTypeEarth) worldType).getMapZoom();
         }

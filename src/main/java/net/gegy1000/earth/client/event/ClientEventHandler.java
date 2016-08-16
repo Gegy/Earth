@@ -92,7 +92,7 @@ public class ClientEventHandler {
             RenderHelper.enableStandardItemLighting();
             MC.entityRenderer.enableLightmap();
             GL11.glNormal3f(1.0F, 1.0F, 1.0F);
-            int range = 16;
+            int range = 22;
             for (int offsetX = -range - 1; offsetX <= range; offsetX++) {
                 for (int offsetZ = -range - 1; offsetZ <= range; offsetZ++) {
                     BlockPos pos = new BlockPos((int) player.posX + offsetX, 0, (int) player.posZ + offsetZ);

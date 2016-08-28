@@ -126,14 +126,14 @@ public class EarthMainMenuGUI extends GuiMainMenu {
         GlStateManager.enableTexture2D();
         GlStateManager.enableDepth();
 
-        MC.getTextureManager().bindTexture(ATMOSPHERE_TEXTURE);
-
-        GlStateManager.pushMatrix();
-        GlStateManager.translate(this.width / 2.0F, this.height / 2.0F, 0.0F);
-        GlStateManager.scale(resolution.getScaleFactor(), resolution.getScaleFactor(), 1.0F);
-        GlStateManager.scale(0.325F, 0.325F, 1.0F);
-        this.drawTexturedModalRect(-128, -128, 0, 0, 256, 256);
-        GlStateManager.popMatrix();
+//        MC.getTextureManager().bindTexture(ATMOSPHERE_TEXTURE);
+//
+//        GlStateManager.pushMatrix();
+//        GlStateManager.translate(this.width / 2.0F, this.height / 2.0F, 0.0F);
+//        GlStateManager.scale(resolution.getScaleFactor(), resolution.getScaleFactor(), 1.0F);
+//        GlStateManager.scale(0.325F, 0.325F, 1.0F);
+//        this.drawTexturedModalRect(-128, -128, 0, 0, 256, 256);
+//        GlStateManager.popMatrix();
 
         GlStateManager.pushMatrix();
         MC.getTextureManager().bindTexture(EARTH_TEXTURE);
@@ -162,6 +162,22 @@ public class EarthMainMenuGUI extends GuiMainMenu {
         GlStateManager.scale(0.25F, 0.25F, 0.25F);
         GlStateManager.callList(this.earthList);
         GlStateManager.popMatrix();
+
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_CONSTANT_ALPHA);
+        GlStateManager.disableTexture2D();
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(this.width / 2.0F, this.height / 2.0F, -100.0F);
+        GlStateManager.scale(0.54F, 0.54F, 0.54F);
+        for (int i = 0; i < 80; i++) {
+            GlStateManager.scale(1.01F, 1.01F, 1.01F);
+            GlStateManager.color(i / 190.0F, 0.6F, 1.0F, 0.15F);
+            GlStateManager.callList(this.earthList);
+        }
+        GlStateManager.popMatrix();
+        GlStateManager.enableTexture2D();
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
         GlStateManager.disableDepth();
 

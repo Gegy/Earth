@@ -23,19 +23,19 @@ import static net.minecraftforge.event.terraingen.PopulateChunkEvent.Populate.Ev
 import static net.minecraftforge.event.terraingen.PopulateChunkEvent.Populate.EventType.ICE;
 
 public class ChunkGeneratorEarth implements IChunkGenerator {
-    private final Random random;
-    private final World world;
+    protected final Random random;
+    protected final World world;
 
-    private Biome[] biomesForGeneration;
+    protected Biome[] biomesForGeneration;
 
-    private final EarthGenerator earthGenerator;
+    protected final EarthGenerator earthGenerator;
 
-    private static final IBlockState STONE_BLOCK = Blocks.STONE.getDefaultState();
-    private static final IBlockState LIQUID_BLOCK = Blocks.WATER.getDefaultState();
-    private static final int OCEAN_HEIGHT = 21;
+    protected static final IBlockState STONE_BLOCK = Blocks.STONE.getDefaultState();
+    protected static final IBlockState LIQUID_BLOCK = Blocks.WATER.getDefaultState();
+    protected static final int OCEAN_HEIGHT = 21;
 
-    private NoiseGeneratorPerlin surfaceNoise;
-    private double[] depthBuffer = new double[256];
+    protected NoiseGeneratorPerlin surfaceNoise;
+    protected double[] depthBuffer = new double[256];
 
     public ChunkGeneratorEarth(World world, long seed, EarthGenerator earthGenerator) {
         this.world = world;
@@ -65,47 +65,6 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
             }
         }
     }
-
-    /*public void generateGrass(int chunkX, int chunkZ, ChunkPrimer chunkPrimer, Biome[] biomes) {
-        ChunkGeneratorEvent.ReplaceBiomeBlocks event = new ChunkGeneratorEvent.ReplaceBiomeBlocks(this, chunkX, chunkZ, chunkPrimer, this.WORLD);
-        MinecraftForge.EVENT_BUS.post(event);
-        if (event.getResult() == Result.DENY) {
-            return;
-        }
-        int worldChunkX = chunkX * 16;
-        int worldChunkZ = chunkZ * 16;
-        IBlockState sand = Blocks.SAND.getDefaultState();
-        IBlockState bedrock = Blocks.BEDROCK.getDefaultState();
-        for (int x = 0; x < 16; ++x) {
-            for (int z = 0; z < 16; ++z) {
-                Biome biome = biomes[x + z * 16];
-                if (biome != null) {
-                    IBlockState topBlock = biome.topBlock;
-                    IBlockState fillerBlock = biome.fillerBlock;
-                    int surfaceDepth = 0;
-                    int height = this.EARTH_GEN.getHeightForCoords(x + worldChunkX, z + worldChunkZ);
-                    if (height < 59) {
-                        topBlock = sand;
-                        fillerBlock = topBlock;
-                    }
-                    for (int y = height; y >= 0; y--) {
-                        if (y > 0 && y < 5 && y <= this.RANDOM.nextInt(5)) {
-                            chunkPrimer.setBlockState(x, y, z, bedrock);
-                        } else {
-                            if (surfaceDepth == 0) {
-                                chunkPrimer.setBlockState(x, y, z, topBlock);
-                            } else if (surfaceDepth < 4) {
-                                chunkPrimer.setBlockState(x, y, z, fillerBlock);
-                            } else if (surfaceDepth > 4 && y > 5) {
-                                y = 5;
-                            }
-                            surfaceDepth++;
-                        }
-                    }
-                }
-            }
-        }
-    }*/
 
     public void generateBiomeBlocks(int chunkX, int chunkZ, ChunkPrimer primer, Biome[] biomes) {
         MockChunkPrimer mockPrimer = new MockChunkPrimer(primer, 62 - OCEAN_HEIGHT);

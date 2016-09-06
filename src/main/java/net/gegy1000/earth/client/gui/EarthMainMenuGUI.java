@@ -170,7 +170,7 @@ public class EarthMainMenuGUI extends GuiMainMenu {
         GlStateManager.scale(0.54F, 0.54F, 0.54F);
         for (int i = 0; i < 80; i++) {
             GlStateManager.scale(1.01F, 1.01F, 1.01F);
-            GlStateManager.color(i / 190.0F, 0.6F, 1.0F, 0.15F);
+            GlStateManager.color(i / 190.0F, 0.6F, 1.0F, 0.11F);
             GlStateManager.callList(this.earthList);
         }
         GlStateManager.popMatrix();

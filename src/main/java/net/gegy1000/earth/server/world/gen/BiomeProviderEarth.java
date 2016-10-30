@@ -17,13 +17,13 @@ import java.util.List;
 import java.util.Random;
 
 public class BiomeProviderEarth extends BiomeProvider {
-    private final BiomeCache BIOME_CACHE;
+    private final BiomeCache biomeCache;
     private final List<Biome> SPAWN_BIOMES;
 
     private final EarthGenerator GENERATOR;
 
     public BiomeProviderEarth(EarthGenerator generator) {
-        this.BIOME_CACHE = new BiomeCache(this);
+        this.biomeCache = new BiomeCache(this);
         this.SPAWN_BIOMES = Lists.newArrayList();
         this.SPAWN_BIOMES.addAll(allowedBiomes);
         this.GENERATOR = generator;
@@ -35,12 +35,13 @@ public class BiomeProviderEarth extends BiomeProvider {
     }
 
     @Override
-    public Biome getBiomeGenerator(BlockPos pos) {
-        return this.loadBiomeFromCache(pos, null);
+    public Biome getBiome(BlockPos pos) {
+        return this.getBiome(pos, null);
     }
 
-    public Biome loadBiomeFromCache(BlockPos pos, Biome defaultBiome) {
-        return this.BIOME_CACHE.getBiome(pos.getX(), pos.getZ(), defaultBiome);
+    @Override
+    public Biome getBiome(BlockPos pos, Biome defaultBiome) {
+        return this.biomeCache.getBiome(pos.getX(), pos.getZ(), defaultBiome);
     }
 
     @Override
@@ -66,18 +67,18 @@ public class BiomeProviderEarth extends BiomeProvider {
     }
 
     @Override
-    public Biome[] loadBlockGeneratorData(Biome[] oldBiomes, int x, int z, int width, int depth) {
-        return this.getBiomeGenAt(oldBiomes, x, z, width, depth, true);
+    public Biome[] getBiomes(Biome[] oldBiomes, int x, int z, int width, int depth) {
+        return this.getBiomes(oldBiomes, x, z, width, depth, true);
     }
 
     @Override
-    public Biome[] getBiomeGenAt(Biome[] biomes, int x, int z, int width, int length, boolean cache) {
+    public Biome[] getBiomes(Biome[] biomes, int x, int z, int width, int length, boolean cache) {
         IntCache.resetIntCache();
         if (biomes == null || biomes.length < width * length) {
             biomes = new Biome[width * length];
         }
         if (cache && width == 16 && length == 16 && (x & 15) == 0 && (z & 15) == 0) {
-            Biome[] cachedBiomes = this.BIOME_CACHE.getCachedBiomes(x, z);
+            Biome[] cachedBiomes = this.biomeCache.getCachedBiomes(x, z);
             System.arraycopy(cachedBiomes, 0, biomes, 0, width * length);
             return biomes;
         } else {
@@ -145,7 +146,7 @@ public class BiomeProviderEarth extends BiomeProvider {
 
     @Override
     public void cleanupCache() {
-        this.BIOME_CACHE.cleanupCache();
+        this.biomeCache.cleanupCache();
     }
 
     @Override

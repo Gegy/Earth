@@ -41,20 +41,4 @@ public class WorldTypeEarth extends WorldType {
     public EarthGenerator getGenerator() {
         return this.generator;
     }
-
-    public int getMapZoomX() {
-        return 300;
-    }
-
-    public int getMapZoomY() {
-        return 257;
-    }
-
-    public int getMapZoom() {
-        return 16;
-    }
-
-    public int getMapDownloadScale() {
-        return 8;
-    }
 }

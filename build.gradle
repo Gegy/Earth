@@ -31,10 +31,20 @@ repositories {
 		name = "ilexiconn"
 		url = "http://maven.ilexiconn.net"
 	}
+    maven {
+        name = "topobyte"
+        url = "http://mvn.topobyte.de"
+    }
 }
 
 dependencies {
     compile "net.ilexiconn:llibrary:$llibrary_version-1.10.2:dev"
+    compile 'de.topobyte:osm4j-core:0.0.15'
+    compile 'de.topobyte:osm4j-utils:0.0.20'
+    compile 'de.topobyte:osm4j-xml:0.0.3'
+    compile 'de.topobyte:osm4j-pbf:0.0.5'
+    compile 'de.topobyte:osm4j-tbo:0.0.9'
+    compile 'de.topobyte:osm4j-geometry:0.0.10'
 }
 
 processResources {

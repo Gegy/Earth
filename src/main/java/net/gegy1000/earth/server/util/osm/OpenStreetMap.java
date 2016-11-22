@@ -1,4 +1,4 @@
-package net.gegy1000.earth.osm;
+package net.gegy1000.earth.server.util.osm;
 
 import de.topobyte.osm4j.core.access.OsmIterator;
 import de.topobyte.osm4j.core.model.iface.EntityContainer;
@@ -9,8 +9,9 @@ import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import de.topobyte.osm4j.xml.dynsax.OsmXmlIterator;
 import net.gegy1000.earth.Earth;
 import net.gegy1000.earth.client.map.Building;
-import net.gegy1000.earth.client.map.MapPoint;
+import net.gegy1000.earth.server.util.MapPoint;
 import net.gegy1000.earth.client.map.Street;
+import net.minecraft.world.World;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -47,7 +48,7 @@ public class OpenStreetMap {
         return null;
     }
 
-    public static TileData parse(InputStream in) throws IOException {
+    public static TileData parse(World world, InputStream in) throws IOException {
         Set<Street> streets = new HashSet<>();
         Set<Building> buildings = new HashSet<>();
         try {
@@ -77,7 +78,7 @@ public class OpenStreetMap {
                     for (int i = 0; i < way.getNumberOfNodes(); i++) {
                         long nodeID = way.getNodeId(i);
                         OsmNode node = nodes.get(nodeID);
-                        points.add(new MapPoint(node.getLatitude(), node.getLongitude()));
+                        points.add(new MapPoint(world, node.getLatitude(), node.getLongitude()));
                     }
                     streets.add(new Street(tags.get("name"), points, waterway));
                 } else if (building) {
@@ -92,9 +93,9 @@ public class OpenStreetMap {
                     for (int i = 0; i < way.getNumberOfNodes(); i++) {
                         long nodeID = way.getNodeId(i);
                         OsmNode node = nodes.get(nodeID);
-                        points.add(new MapPoint(node.getLatitude(), node.getLongitude()));
+                        points.add(new MapPoint(world, node.getLatitude(), node.getLongitude()));
                     }
-                    buildings.add(new Building(points, height));
+                    buildings.add(new Building(world, points, height));
                 }
             }
         } finally {

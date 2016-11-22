@@ -1,11 +1,13 @@
 package net.gegy1000.earth.client.map;
 
 import net.gegy1000.earth.client.util.Triangulate;
+import net.gegy1000.earth.server.util.MapPoint;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.world.World;
 import org.lwjgl.opengl.GL11;
 
 import javax.vecmath.Vector2f;
@@ -14,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Building implements MapObject {
+    private final World world;
     private final List<MapPoint> points;
     private final double height;
     private double lowestHeight = Double.MAX_VALUE;
@@ -25,7 +28,8 @@ public class Building implements MapObject {
     private VertexBuffer topBuffer;
     private boolean built;
 
-    public Building(List<MapPoint> points, double height) {
+    public Building(World world, List<MapPoint> points, double height) {
+        this.world = world;
         this.height = height;
         double averageX = 0.0;
         double averageY = 0.0;
@@ -69,7 +73,7 @@ public class Building implements MapObject {
         if (Triangulate.process(contour, result)) {
             List<MapPoint> triangulatedPoints = new ArrayList<>();
             for (Vector2f vector : result) {
-                triangulatedPoints.add(new MapPoint(vector.getX() + averageX, vector.getY() + averageZ));
+                triangulatedPoints.add(new MapPoint(world, vector.getX() + averageX, vector.getY() + averageZ));
             }
             this.points = triangulatedPoints;
         } else {

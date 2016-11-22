@@ -1,6 +1,7 @@
-package net.gegy1000.earth.google.geocode;
+package net.gegy1000.earth.server.util.google.geocode;
 
 import com.google.gson.Gson;
+import net.gegy1000.earth.server.util.MapPoint;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -13,8 +14,8 @@ public class ReverseGeoCode {
         this.formattedAddress = formattedAddress;
     }
 
-    public static ReverseGeoCode get(double lat, double lon) throws IOException {
-        String req = "latlng=" + lat + "," + lon + "&sensor=false";
+    public static ReverseGeoCode get(MapPoint point) throws IOException {
+        String req = "latlng=" + point.getLatitude() + "," + point.getLongitude() + "&sensor=false";
         URL url = new URL("http://maps.googleapis.com/maps/api/geocode/json?" + req);
 
         Gson gson = new Gson();

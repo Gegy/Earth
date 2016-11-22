@@ -1,8 +1,11 @@
 package net.gegy1000.earth.client.map;
 
-import net.gegy1000.earth.Earth;
-import net.gegy1000.earth.osm.OpenStreetMap;
+import net.gegy1000.earth.server.util.MapPoint;
+import net.gegy1000.earth.server.util.osm.OpenStreetMap;
+import net.gegy1000.earth.server.world.gen.EarthGenerator;
+import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
 import java.io.InputStream;
 import java.util.HashSet;
@@ -65,17 +68,18 @@ public class MapTile {
         return this.center;
     }
 
-    public void load() {
-        double minX = Earth.GENERATOR.toLong(this.getX());
-        double maxX = Earth.GENERATOR.toLong(this.getMaxX());
-        double minZ = Earth.GENERATOR.toLat(this.getZ());
-        double maxZ = Earth.GENERATOR.toLat(this.getMaxZ());
-        MapPoint startPoint = new MapPoint(Math.min(minZ, maxZ), Math.min(minX, maxX));
-        MapPoint endPoint = new MapPoint(Math.max(minZ, maxZ), Math.max(minX, maxX));
+    public void load(World world) {
+        EarthGenerator generator = WorldTypeEarth.getGenerator(world);
+        double minX = generator.toLongitude(this.getX());
+        double maxX = generator.toLongitude(this.getMaxX());
+        double minZ = generator.toLatitude(this.getZ());
+        double maxZ = generator.toLatitude(this.getMaxZ());
+        MapPoint startPoint = new MapPoint(world, Math.min(minZ, maxZ), Math.min(minX, maxX));
+        MapPoint endPoint = new MapPoint(world, Math.max(minZ, maxZ), Math.max(minX, maxX));
         try {
             InputStream in = OpenStreetMap.openStream(startPoint, endPoint);
             if (in != null) {
-                OpenStreetMap.TileData data = OpenStreetMap.parse(in);
+                OpenStreetMap.TileData data = OpenStreetMap.parse(world, in);
                 this.apply(data);
             }
         } catch (Exception e) {

@@ -1,10 +1,9 @@
 package net.gegy1000.earth.client.gui;
 
+import net.gegy1000.earth.server.util.MapPoint;
 import net.gegy1000.earth.client.texture.AdvancedDynamicTexture;
-import net.gegy1000.earth.google.SatelliteMap;
-import net.gegy1000.earth.google.geocode.ReverseGeoCode;
-import net.gegy1000.earth.server.world.gen.EarthGenerator;
-import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
+import net.gegy1000.earth.server.util.google.SatelliteMap;
+import net.gegy1000.earth.server.util.google.geocode.ReverseGeoCode;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
@@ -20,20 +19,17 @@ import java.io.IOException;
 public class MapGUI extends GuiScreen {
     private AdvancedDynamicTexture dynamicTexture;
     private BufferedImage image;
-    private final double latitude;
-    private final double longitude;
+    private final MapPoint point;
     private String address;
 
     public MapGUI(final EntityPlayer player) {
-        EarthGenerator generator = WorldTypeEarth.getGenerator(player.worldObj);
-        this.latitude = generator.toLat(player.posZ);
-        this.longitude = generator.toLong(player.posX);
+        this.point = new MapPoint(player.worldObj, player.posX, player.posY, player.posZ);
 
         Thread downloadThread = new Thread(() -> {
             try {
-                SatelliteMap satelliteMap = SatelliteMap.get(this.latitude, this.longitude);
+                SatelliteMap satelliteMap = SatelliteMap.get(this.point);
                 this.image = satelliteMap.getImage();
-                this.address = ReverseGeoCode.get(this.latitude, this.longitude).getFormattedAddress();
+                this.address = ReverseGeoCode.get(this.point).getFormattedAddress();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -60,7 +56,7 @@ public class MapGUI extends GuiScreen {
 
             this.fontRendererObj.drawStringWithShadow("Downloading Image...", 10, 10, 0xFF0000);
         } else {
-            this.fontRendererObj.drawStringWithShadow("Location: Lat: " + this.latitude + ", Long: " + this.longitude, 5, 5, 0xFF0000);
+            this.fontRendererObj.drawStringWithShadow("Location: Latitude: " + this.point.getLatitude() + ", Longitude: " + this.point.getLongitude(), 5, 5, 0xFF0000);
             this.fontRendererObj.drawStringWithShadow(this.address, 5, 15, 0x00FFFF);
 
             this.dynamicTexture.bind();
@@ -72,7 +68,7 @@ public class MapGUI extends GuiScreen {
         }
     }
 
-    public void drawTexturedModalRect(int x, int y, int textureX, int textureY, int width, int height, int texWidth, int texHeight, double scaleX, double scaleY) {
+    private void drawTexturedModalRect(int x, int y, int textureX, int textureY, int width, int height, int textureWidth, int textureHeight, double scaleX, double scaleY) {
         GlStateManager.pushMatrix();
         GlStateManager.color(1.0F, 1.0F, 1.0F);
         GlStateManager.scale(scaleX, scaleY, 0.0);
@@ -80,15 +76,15 @@ public class MapGUI extends GuiScreen {
         x /= scaleX;
         y /= scaleY;
 
-        float f = 1.0F / texWidth;
-        float f1 = 1.0F / texHeight;
+        float xScale = 1.0F / textureWidth;
+        float yScale = 1.0F / textureHeight;
         Tessellator tessellator = Tessellator.getInstance();
         VertexBuffer buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        buffer.pos(x, y + height, this.zLevel).tex(textureX * f, (textureY + height) * f1).endVertex();
-        buffer.pos(x + width, y + height, this.zLevel).tex((textureX + width) * f, (textureY + height) * f1).endVertex();
-        buffer.pos(x + width, y, this.zLevel).tex((textureX + width) * f, (textureY * f1)).endVertex();
-        buffer.pos(x, y, this.zLevel).tex(textureX * f, textureY * f1).endVertex();
+        buffer.pos(x, y + height, this.zLevel).tex(textureX * xScale, (textureY + height) * yScale).endVertex();
+        buffer.pos(x + width, y + height, this.zLevel).tex((textureX + width) * xScale, (textureY + height) * yScale).endVertex();
+        buffer.pos(x + width, y, this.zLevel).tex((textureX + width) * xScale, (textureY * yScale)).endVertex();
+        buffer.pos(x, y, this.zLevel).tex(textureX * xScale, textureY * yScale).endVertex();
         tessellator.draw();
         GlStateManager.popMatrix();
     }

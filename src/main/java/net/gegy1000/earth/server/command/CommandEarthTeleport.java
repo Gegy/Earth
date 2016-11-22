@@ -1,6 +1,5 @@
 package net.gegy1000.earth.server.command;
 
-import net.gegy1000.earth.Earth;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
 import net.minecraft.command.CommandBase;
@@ -34,8 +33,8 @@ public class CommandEarthTeleport extends CommandBase {
                 double latitude = Double.parseDouble(args[0]);
                 double longitude = Double.parseDouble(args[1]);
                 EarthGenerator generator = WorldTypeEarth.getGenerator(server.getEntityWorld());
-                double x = generator.fromLong(longitude);
-                double z = generator.fromLat(latitude);
+                double x = generator.fromLongitude(longitude);
+                double z = generator.fromLatitude(latitude);
                 int y = generator.getHeightForCoords((int) x, (int) z) + 1;
                 if (sender instanceof EntityPlayerMP) {
                     ((EntityPlayerMP) sender).connection.setPlayerLocation(x, y, z, 0, 0);

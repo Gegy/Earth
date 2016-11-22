@@ -1,8 +1,9 @@
 package net.gegy1000.earth.client.gui;
 
 import net.gegy1000.earth.client.texture.AdvancedDynamicTexture;
-import net.gegy1000.earth.google.StreetView;
-import net.gegy1000.earth.google.geocode.GeoCode;
+import net.gegy1000.earth.server.util.MapPoint;
+import net.gegy1000.earth.server.util.google.StreetView;
+import net.gegy1000.earth.server.util.google.geocode.GeoCode;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
@@ -95,14 +96,12 @@ public class TeleportPlaceGUI extends GuiScreen {
     @Override
     public void actionPerformed(GuiButton button) {
         try {
-            GeoCode geoCode = GeoCode.get(this.place);
+            GeoCode geocode = GeoCode.get(this.mc.theWorld, this.place);
 
-            if (geoCode != null) {
-                final double latitude = geoCode.getLatitude();
-                final double longitude = geoCode.getLongitude();
-
+            if (geocode != null) {
+                final MapPoint point = geocode.getPoint();
                 if (button.id == 0) {
-                    this.mc.thePlayer.sendChatMessage("/tplatlong " + latitude + " " + longitude);
+                    this.mc.thePlayer.sendChatMessage("/tplatlong " + point.getLatitude() + " " + point.getLongitude());
                     this.mc.displayGuiScreen(null);
                 } else if (button.id == 1) {
                     this.image = null;
@@ -110,7 +109,7 @@ public class TeleportPlaceGUI extends GuiScreen {
 
                     Thread downloadThread = new Thread(() -> {
                         try {
-                            StreetView streetView = StreetView.get(latitude, longitude, 180, 0);
+                            StreetView streetView = StreetView.get(point, 180, 0);
                             this.image = streetView.getImage();
                         } catch (IOException e) {
                             e.printStackTrace();

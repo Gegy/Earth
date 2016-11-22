@@ -1,4 +1,4 @@
-package net.gegy1000.earth.google.geocode;
+package net.gegy1000.earth.server.util.google.geocode;
 
 public class GeoCodeContainer {
     public String status;

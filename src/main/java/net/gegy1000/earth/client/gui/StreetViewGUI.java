@@ -1,10 +1,9 @@
 package net.gegy1000.earth.client.gui;
 
 import net.gegy1000.earth.client.texture.AdvancedDynamicTexture;
-import net.gegy1000.earth.google.StreetView;
-import net.gegy1000.earth.google.geocode.ReverseGeoCode;
-import net.gegy1000.earth.server.world.gen.EarthGenerator;
-import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
+import net.gegy1000.earth.server.util.MapPoint;
+import net.gegy1000.earth.server.util.google.StreetView;
+import net.gegy1000.earth.server.util.google.geocode.ReverseGeoCode;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
@@ -20,20 +19,17 @@ import java.io.IOException;
 public class StreetViewGUI extends GuiScreen {
     private AdvancedDynamicTexture dynamicTexture;
     private BufferedImage image;
-    private final double latitude;
-    private final double longitude;
+    private final MapPoint point;
     private String address;
 
     public StreetViewGUI(final EntityPlayer player) {
-        EarthGenerator generator = WorldTypeEarth.getGenerator(player.worldObj);
-        this.latitude = generator.toLat(player.posZ);
-        this.longitude = generator.toLong(player.posX);
+        this.point = new MapPoint(player.worldObj, player.posX, player.posY, player.posZ);
 
         Thread downloadThread = new Thread(() -> {
             try {
-                StreetView streetView = StreetView.get(this.latitude, this.longitude, player.rotationYaw - 180, -player.rotationPitch);
+                StreetView streetView = StreetView.get(this.point, player.rotationYaw - 180, -player.rotationPitch);
                 this.image = streetView.getImage();
-                this.address = ReverseGeoCode.get(this.latitude, this.longitude).getFormattedAddress();
+                this.address = ReverseGeoCode.get(this.point).getFormattedAddress();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -60,7 +56,7 @@ public class StreetViewGUI extends GuiScreen {
 
             this.fontRendererObj.drawStringWithShadow("Downloading Image...", 10, 10, 0xFF0000);
         } else {
-            this.fontRendererObj.drawStringWithShadow("Location: Lat: " + this.latitude + ", Long: " + this.longitude, 5, 5, 0xFF0000);
+            this.fontRendererObj.drawStringWithShadow("Location: Latitude: " + this.point.getLatitude() + ", Longitude: " + this.point.getLongitude(), 5, 5, 0xFF0000);
             this.fontRendererObj.drawStringWithShadow(this.address, 5, 15, 0x00FFFF);
 
             this.dynamicTexture.bind();

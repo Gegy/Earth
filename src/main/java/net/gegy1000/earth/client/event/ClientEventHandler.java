@@ -16,6 +16,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.culling.ICamera;
+import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -63,11 +64,9 @@ public class ClientEventHandler {
     @SubscribeEvent
     public void onWorldRender(RenderWorldLastEvent event) {
         if (this.isMapEnabled) {
-            EntityPlayerSP player = MC.thePlayer;
-            float partialTicks = event.getPartialTicks();
-            double viewX = player.lastTickPosX + (player.posX - player.lastTickPosX) * partialTicks;
-            double viewY = player.lastTickPosY + (player.posY - player.lastTickPosY) * partialTicks;
-            double viewZ = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialTicks;
+            double viewX = TileEntityRendererDispatcher.staticPlayerX;
+            double viewY = TileEntityRendererDispatcher.staticPlayerY;
+            double viewZ = TileEntityRendererDispatcher.staticPlayerZ;
             ICamera camera = new Frustum();
             camera.setPosition(viewX, viewY, viewZ);
 
@@ -108,78 +107,4 @@ public class ClientEventHandler {
             GlStateManager.disableFog();
         }
     }
-
-//    private void renderBuilding(Tessellator tessellator, VertexBuffer buffer, Building building) {
-//        double height = building.getHeight() * 0.0225;
-//        double lowestHeight = building.getLowestHeight();
-//        double highestHeight = building.getHighestHeight();
-//        double top = highestHeight + height;
-//        List<MapPoint> points = building.getPoints();
-//        buffer.begin(GL11.GL_QUAD_STRIP, DefaultVertexFormats.POSITION_NORMAL);
-//        for (MapPoint point : points) {
-//            double x = point.getX();
-//            double z = point.getZ();
-//            buffer.pos(x, lowestHeight, z).normal(0.0F, 0.0F, 1.0F).endVertex();
-//            buffer.pos(x, top, z).normal(0.0F, 0.0F, 1.0F).endVertex();
-//        }
-//        tessellator.draw();
-//        GlStateManager.color(0.8F, 0.8F, 0.8F);
-//        buffer.begin(GL11.GL_POLYGON, DefaultVertexFormats.POSITION_NORMAL);
-//        for (MapPoint point : points) {
-//            buffer.pos(point.getX(), top, point.getZ()).normal(0.0F, 1.0F, 0.0F).endVertex();
-//        }
-//        tessellator.draw();
-//                            /*GlStateManager.glLineWidth(10.0F);
-//                            GlStateManager.color(1.0F, 1.0F, 1.0F);
-//                            buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
-//                            int i = 0;
-//                            for (MapPoint point : points) {
-////                                if (point.getX() > 33169.1 && point.getX() < 33169.5 && point.getZ() > 61047.5 && point.getZ() < 61047.7) {
-////                                    System.out.println();
-////                                    System.out.println("======");
-////                                    for (MapPoint p : points) {
-////                                        System.out.println((p.getX() - 33169.1) + ", " + (p.getZ() - 61047.5));
-////                                    }
-////                                }
-//                                buffer.pos(point.getX(), point.getY() + height, point.getZ()).color(0.0F, i < 2 ? 1.0F : 0.0F, i >= points.size() - 1 ? 1.0F : 0.0F, 1.0F).endVertex();
-//                                i++;
-//                            }
-//                            tessellator.draw();*/
-//    }
-//
-//    private void renderStreet(Tessellator tessellator, VertexBuffer buffer, int skip, Street street) {
-//        if (street.isWaterway()) {
-//            GlStateManager.doPolygonOffset(-1.0F, 3.0F);
-//            GlStateManager.color(0.19F, 0.89F, 1.0F, 1.0F);
-//        } else {
-//            GlStateManager.doPolygonOffset(1.0F, 0.0F);
-//            GlStateManager.color(0.1F, 0.1F, 0.1F, 1.0F);
-//        }
-//        int streetSkip = skip;
-//        buffer.begin(GL11.GL_QUAD_STRIP, DefaultVertexFormats.POSITION);
-//        List<MapPoint> points = street.getPoints();
-//        if (points.size() < 10) {
-//            streetSkip = 1;
-//        }
-//        double streetThickness = 0.1;
-//        for (int i = 0; i < points.size(); i += streetSkip) {
-//            if (i >= points.size()) {
-//                i = points.size() - 1;
-//            }
-//            MapPoint point = points.get(i);
-//            if (i < points.size() - 1) {
-//                MapPoint next = points.get(i + 1);
-//                double deltaX = next.getX() - point.getX();
-//                double deltaZ = next.getZ() - point.getZ();
-//                double length = Math.sqrt((deltaX * deltaX) + (deltaZ * deltaZ));
-//                double offsetX = (streetThickness * deltaZ / length) / 2;
-//                double offsetZ = (streetThickness * deltaX / length) / 2;
-//                buffer.pos(point.getX() - offsetX, point.getY(), point.getZ() + offsetZ).endVertex();
-//                buffer.pos(point.getX() + offsetX, point.getY(), point.getZ() - offsetZ).endVertex();
-//                buffer.pos(next.getX() - offsetX, next.getY(), next.getZ() + offsetZ).endVertex();
-//                buffer.pos(next.getX() + offsetX, next.getY(), next.getZ() - offsetZ).endVertex();
-//            }
-//        }
-//        tessellator.draw();
-//    }
 }

@@ -45,7 +45,7 @@ public class MapHandler {
                     EntityPlayerSP player = MC.thePlayer;
                     if (player != null) {
                         MapTile tile = LOAD_QUEUE.poll();
-                        tile.load();
+                        tile.load(MC.theWorld);
                         synchronized (MAP_LOCK) {
                             MAP_TILES.add(tile);
                         }

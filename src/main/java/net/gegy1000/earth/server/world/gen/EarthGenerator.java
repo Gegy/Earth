@@ -4,6 +4,7 @@ import com.google.common.collect.HashMultimap;
 import net.gegy1000.earth.Earth;
 import net.gegy1000.earth.server.biome.EarthBiome;
 import net.minecraft.init.Biomes;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.fml.common.ProgressManager;
 
@@ -27,6 +28,9 @@ public class EarthGenerator {
 
     protected static final int HEIGHTMAP_VERSION = 1;
     protected static final int BIOMEMAP_VERSION = 4;
+
+    protected static final float STANDARD_PARALLEL = 0.0F;
+    protected static final float CENTRAL_MERIDIAN = 0.0F;
 
     public void load(ProgressManager.ProgressBar bar) throws IOException {
         bar.step("Heightmap");
@@ -222,24 +226,42 @@ public class EarthGenerator {
         }
     }
 
-    public double toLat(double z) {
-        return 90.0 - (((z + (WORLD_OFFSET_Z * this.getWorldScale())) / (this.heightmap.getHeight() * this.getWorldScale())) * 180.0);
+    public double toLatitude(double z) {
+        return this.fromZ(z + STANDARD_PARALLEL);
     }
 
-    public double toLong(double x) {
-        return (((x + (WORLD_OFFSET_X * this.getWorldScale())) / (this.heightmap.getWidth() * this.getWorldScale())) * 360.0) - 180.0;
+    public double toLongitude(double x) {
+        return this.fromX((x / (MathHelper.cos((float) Math.toRadians(STANDARD_PARALLEL)))) + CENTRAL_MERIDIAN);
     }
 
-    public double fromLat(double lat) {
+    public double fromLatitude(double latitude) {
+        return this.toZ(latitude - STANDARD_PARALLEL);
+    }
+
+    public double fromLongitude(double longitude) {
+        return this.toX((longitude - CENTRAL_MERIDIAN) * MathHelper.cos((float) Math.toRadians(STANDARD_PARALLEL)));
+    }
+
+    protected double fromZ(double z) {
+        double scale = this.getWorldScale();
+        return 90.0 - (z + WORLD_OFFSET_Z * scale) / (this.heightmap.getHeight() * scale) * 180.0;
+    }
+
+    protected double fromX(double x) {
+        double scale = this.getWorldScale();
+        return (x + WORLD_OFFSET_X * scale) / (this.heightmap.getWidth() * scale) * 360.0 - 180.0;
+    }
+
+    protected double toZ(double latitude) {
         int height = this.heightmap.getHeight();
         double scale = this.getWorldScale();
-        double scaledZ = height - ((lat + 90.0) / 180.0 * (double) height);
+        double scaledZ = height - (latitude + 90.0) / 180.0 * (double) height;
         return (scaledZ - WORLD_OFFSET_Z) * scale;
     }
 
-    public double fromLong(double longitude) {
+    protected double toX(double longitude) {
         double scale = this.getWorldScale();
-        double scaledX = ((longitude + 180.0) / 360.0 * (double) this.heightmap.getWidth());
+        double scaledX = (longitude + 180.0) / 360.0 * (double) this.heightmap.getWidth();
         return (scaledX - WORLD_OFFSET_X) * scale;
     }
 

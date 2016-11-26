@@ -1,59 +1,59 @@
 package net.gegy1000.earth.server.world.gen;
 
 import com.google.common.collect.HashMultimap;
-import net.gegy1000.earth.Earth;
 import net.gegy1000.earth.server.biome.EarthBiome;
 import net.minecraft.init.Biomes;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.biome.Biome;
-import net.minecraftforge.fml.common.ProgressManager;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Random;
 
 public class EarthGenerator {
-    protected DataMap heightmap;
-    protected DataMap biomemap;
+    protected ImageDataMap heightmap;
+    protected ImageDataMap biomemap;
 
-    protected static final String HEIGHTMAP_LOCATION = "/assets/earth/data/earth_heightmap.mchmap";
-    protected static final String BIOMEMAP_LOCATION = "/assets/earth/data/earth_biomemap.mcbmap";
-
-    protected static final double WORLD_SCALE = 15.0; //TODO 20
+    protected static final double WORLD_SCALE = 20.0;
 
     protected static final int WORLD_OFFSET_X = 21600;
     protected static final int WORLD_OFFSET_Z = 10800;
 
     protected static final Biome DEFAULT_BIOME = Biomes.OCEAN;
 
-    protected static final int HEIGHTMAP_VERSION = 1;
-    protected static final int BIOMEMAP_VERSION = 4;
-
     protected static final float STANDARD_PARALLEL = 0.0F;
     protected static final float CENTRAL_MERIDIAN = 0.0F;
 
-    public void load(ProgressManager.ProgressBar bar) throws IOException {
-        bar.step("Heightmap");
+    public void load()  {
         if (this.heightmap == null) {
             this.loadHeightmap();
         }
-        bar.step("Biomemap");
         if (this.biomemap == null) {
             this.loadBiomemap();
         }
     }
 
-    public void loadHeightmap() throws IOException {
-        Earth.LOGGER.info("Loading Earth Heightmap...");
-        this.heightmap = DataMap.construct(HEIGHTMAP_LOCATION, false, HEIGHTMAP_VERSION);
+    public void loadHeightmap() {
+        this.heightmap = new ImageDataMap(43200, 21600, 1350, 1350, "assets/earth/data/heightmap");
     }
 
-    public void loadBiomemap() throws IOException {
-        Earth.LOGGER.info("Loading Earth Biomemap...");
-        this.biomemap = DataMap.construct(BIOMEMAP_LOCATION, true, BIOMEMAP_VERSION);
+    public void loadBiomemap() {
+        this.biomemap = new ImageDataMap(43200, 21600, 1350, 1350, "assets/earth/data/biomemap", (image, width, height) -> {
+            byte[] heights = null;
+            if (image != null) {
+                heights = new byte[width * height];
+                int i = 0;
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        int colour = image.getRGB(x, y) & 0xFFFFFF;
+                        heights[i++] = (byte) (EarthBiome.get(colour).ordinal() & 0xFF);
+                    }
+                }
+            }
+            return new ImageDataMap.Tile(heights, width, height);
+        });
     }
 
-    public int getHeightForCoords(int x, int z) {
+    public int getGenerationHeight(int x, int z) {
         int width = this.heightmap.getWidth();
         int height = this.biomemap.getHeight();
 
@@ -86,7 +86,7 @@ public class EarthGenerator {
         return value;
     }
 
-    public Biome getBiomeForCoords(int x, int z) {
+    public Biome getGenerationBiome(int x, int z) {
         int width = this.biomemap.getWidth();
         int height = this.biomemap.getHeight();
 
@@ -177,11 +177,6 @@ public class EarthGenerator {
         return p[1] + 0.5 * x * (p[2] - p[0] + x * (2.0 * p[0] - 5.0 * p[1] + 4.0 * p[2] - p[3] + x * (3.0 * (p[1] - p[2]) + p[3] - p[0])));
     }
 
-    public void clearCache() {
-        this.heightmap.clearCache();
-        this.biomemap.clearCache();
-    }
-
     protected static class Bicubic {
         protected static final ThreadLocal<double[]> ARR_THREADSAFE = new ThreadLocal<double[]>() {
             @Override
@@ -200,26 +195,24 @@ public class EarthGenerator {
         }
     }
 
-    public double extractHeight(int x, int y) {
+    protected double sampleHeight(int x, int y) {
         if (x < 0 || x >= this.heightmap.getWidth() || y < 0 || y >= this.heightmap.getHeight()) {
             return 0;
         }
-        return this.heightmap.getData(x, y);
+        return this.heightmap.sample(x, y);
     }
 
-    public double getHeight(int x, int y) {
-        double height = this.extractHeight(x, y);
-        if (height < 62) {
-            height /= 4;
-        } else {
-            height -= 44;
+    protected double getHeight(int x, int y) {
+        double height = this.sampleHeight(x, y) * 0.9;
+        if (height > 0) {
+            height += 12;
         }
-        return Math.max(1, height * 1.2);
+        return height + 8;
     }
 
     public Biome getBiome(int x, int y) {
         try {
-            return EarthBiome.values()[(this.biomemap.getData(x, y))].get();
+            return EarthBiome.values()[(this.biomemap.sample(x, y))].get();
         } catch (Exception e) {
             e.printStackTrace();
             return DEFAULT_BIOME;

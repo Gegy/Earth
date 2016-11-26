@@ -4,14 +4,11 @@ import net.gegy1000.earth.server.proxy.ServerProxy;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.ProgressManager;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.io.IOException;
 
 @Mod(modid = Earth.MODID, name = "Earth", version = Earth.VERSION, dependencies = "required-after:llibrary@[" + Earth.LLIBRARY_VERSION + ",)")
 public class Earth {
@@ -28,12 +25,7 @@ public class Earth {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        ProgressManager.ProgressBar bar = ProgressManager.push("Loading Earth Maps", 2);
-        try {
-            GENERATOR.load(bar);
-        } catch (IOException e) {
-        }
-        ProgressManager.pop(bar);
+        GENERATOR.load();
 
         new WorldTypeEarth("earth", GENERATOR);
 

@@ -35,7 +35,7 @@ public class CommandEarthTeleport extends CommandBase {
                 EarthGenerator generator = WorldTypeEarth.getGenerator(server.getEntityWorld());
                 double x = generator.fromLongitude(longitude);
                 double z = generator.fromLatitude(latitude);
-                int y = generator.getHeightForCoords((int) x, (int) z) + 1;
+                int y = generator.getGenerationHeight((int) x, (int) z) + 1;
                 if (sender instanceof EntityPlayerMP) {
                     ((EntityPlayerMP) sender).connection.setPlayerLocation(x, y, z, 0, 0);
                     sender.addChatMessage(new TextComponentString("Teleporting to " + x + " " + y + " " + z + ", or " + latitude + " " + longitude + "."));

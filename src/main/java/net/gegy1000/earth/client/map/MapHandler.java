@@ -20,6 +20,7 @@ import java.util.concurrent.PriorityBlockingQueue;
  * Fix roads on different heights
  * Building normals
  * Batch mapobjects
+ * Way.Type color config
  */
 public class MapHandler {
     public static final int TILE_RANGE = 4;

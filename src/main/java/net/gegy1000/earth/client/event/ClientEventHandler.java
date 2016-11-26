@@ -70,25 +70,23 @@ public class ClientEventHandler {
             ICamera camera = new Frustum();
             camera.setPosition(viewX, viewY, viewZ);
 
-            GlStateManager.pushMatrix();
             GlStateManager.disableTexture2D();
             GlStateManager.disableCull();
             GlStateManager.enableFog();
             GlStateManager.enableBlend();
-            GlStateManager.translate(-viewX, -viewY, -viewZ);
             GL11.glNormal3f(1.0F, 1.0F, 1.0F);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             RenderHelper.enableStandardItemLighting();
             MC.entityRenderer.enableLightmap();
             synchronized (MapHandler.MAP_LOCK) {
                 for (MapTile tile : MapHandler.MAP_TILES) {
                     Set<MapObject> mapObjects = tile.getMapObjects();
-                    GlStateManager.enablePolygonOffset();
                     for (MapObject mapObject : mapObjects) {
                         if (camera.isBoundingBoxInFrustum(mapObject.getBounds())) {
                             if (mapObject.hasBuilt()) {
                                 mapObject.enableState();
                                 GlStateManager.pushMatrix();
-                                GlStateManager.doPolygonOffset(1.0F, 0.0F);
+                                GlStateManager.translate(-viewX, -viewY, -viewZ);
                                 mapObject.render();
                                 GlStateManager.popMatrix();
                                 mapObject.disableState();
@@ -97,11 +95,9 @@ public class ClientEventHandler {
                             }
                         }
                     }
-                    GlStateManager.disablePolygonOffset();
                 }
             }
             MC.entityRenderer.disableLightmap();
-            GlStateManager.popMatrix();
             GlStateManager.enableCull();
             GlStateManager.enableTexture2D();
             GlStateManager.disableFog();

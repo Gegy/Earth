@@ -12,15 +12,12 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.chunk.IChunkGenerator;
 import net.minecraft.world.gen.NoiseGeneratorPerlin;
-import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.terraingen.PopulateChunkEvent;
 import net.minecraftforge.event.terraingen.TerrainGen;
 
 import java.util.List;
 import java.util.Random;
-
-import static net.minecraftforge.event.terraingen.PopulateChunkEvent.Populate.EventType.ANIMALS;
-import static net.minecraftforge.event.terraingen.PopulateChunkEvent.Populate.EventType.ICE;
 
 public class ChunkGeneratorEarth implements IChunkGenerator {
     protected final Random random;
@@ -52,7 +49,7 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
         IBlockState bedrock = Blocks.BEDROCK.getDefaultState();
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-                int height = (this.earthGenerator.getHeightForCoords(x + chunkWorldX, z + chunkWorldZ));
+                int height = (this.earthGenerator.getGenerationHeight(x + chunkWorldX, z + chunkWorldZ));
                 chunkPrimer.setBlockState(x, 0, z, bedrock);
                 for (int y = 1; y <= height; y++) {
                     chunkPrimer.setBlockState(x, y, z, STONE_BLOCK);
@@ -95,8 +92,6 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
 
         chunk.generateSkylightMap();
 
-        this.earthGenerator.clearCache();
-
         return chunk;
     }
 
@@ -113,35 +108,37 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
         BlockPos pos = new BlockPos(x, 0, z);
         Biome biome = this.world.getBiome(pos.add(16, 0, 16));
         this.random.setSeed(this.world.getSeed());
-        long i1 = this.random.nextLong() / 2L * 2L + 1L;
-        long j1 = this.random.nextLong() / 2L * 2L + 1L;
-        this.random.setSeed((long) chunkX * i1 + (long) chunkZ * j1 ^ this.world.getSeed());
-        boolean hasVillageGenerated = false;
+        long k = this.random.nextLong() / 2L * 2L + 1L;
+        long l = this.random.nextLong() / 2L * 2L + 1L;
+        this.random.setSeed((long) chunkX * k + (long) chunkZ * l ^ this.world.getSeed());
+        boolean generatedVillage = false;
 
-        MinecraftForge.EVENT_BUS.post(new PopulateChunkEvent.Pre(this, this.world, this.random, chunkX, chunkZ, hasVillageGenerated));
+        ForgeEventFactory.onChunkPopulate(true, this, this.world, this.random, chunkX, chunkZ, generatedVillage);
 
         biome.decorate(this.world, this.random, new BlockPos(x, 0, z));
-        if (TerrainGen.populate(this, this.world, this.random, chunkX, chunkZ, hasVillageGenerated, ANIMALS)) {
+        if (TerrainGen.populate(this, this.world, this.random, chunkX, chunkZ, generatedVillage, PopulateChunkEvent.Populate.EventType.ANIMALS)) {
             WorldEntitySpawner.performWorldGenSpawning(this.world, biome, x + 8, z + 8, 16, 16, this.random);
         }
         pos = pos.add(8, 0, 8);
 
-        boolean freeze = TerrainGen.populate(this, this.world, this.random, chunkX, chunkZ, hasVillageGenerated, ICE);
-        for (int xOffset = 0; freeze && xOffset < 16; ++xOffset) {
-            for (int zOffset = 0; zOffset < 16; ++zOffset) {
-                BlockPos top = this.world.getPrecipitationHeight(pos.add(xOffset, 0, zOffset));
-                BlockPos ground = top.down();
+        if (TerrainGen.populate(this, this.world, this.random, chunkX, chunkZ, generatedVillage, PopulateChunkEvent.Populate.EventType.ICE)) {
+            for (int offsetX = 0; offsetX < 16; ++offsetX) {
+                for (int offsetZ = 0; offsetZ < 16; ++offsetZ) {
+                    BlockPos snowpos = this.world.getPrecipitationHeight(pos.add(offsetX, 0, offsetZ));
+                    BlockPos groundPos = snowpos.down();
 
-                if (this.world.canBlockFreezeWater(ground)) {
-                    this.world.setBlockState(ground, Blocks.ICE.getDefaultState(), 2);
-                }
+                    if (this.world.canBlockFreezeWater(groundPos)) {
+                        this.world.setBlockState(groundPos, Blocks.ICE.getDefaultState(), 2);
+                    }
 
-                if (this.world.canSnowAt(top, true)) {
-                    this.world.setBlockState(top, Blocks.SNOW_LAYER.getDefaultState(), 2);
+                    if (this.world.canSnowAt(snowpos, true)) {
+                        this.world.setBlockState(snowpos, Blocks.SNOW_LAYER.getDefaultState(), 2);
+                    }
                 }
             }
         }
-        MinecraftForge.EVENT_BUS.post(new PopulateChunkEvent.Post(this, this.world, this.random, chunkX, chunkZ, hasVillageGenerated));
+
+        ForgeEventFactory.onChunkPopulate(false, this, this.world, this.random, chunkX, chunkZ, generatedVillage);
 
         BlockFalling.fallInstantly = false;
     }

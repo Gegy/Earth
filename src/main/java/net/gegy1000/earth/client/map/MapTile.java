@@ -92,7 +92,7 @@ public class MapTile {
     }
 
     public void apply(OpenStreetMap.TileData data) {
-        this.mapObjects.addAll(data.getStreets());
+        this.mapObjects.addAll(data.getWays());
         this.mapObjects.addAll(data.getBuildings());
     }
 

@@ -9,8 +9,8 @@ import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import de.topobyte.osm4j.xml.dynsax.OsmXmlIterator;
 import net.gegy1000.earth.Earth;
 import net.gegy1000.earth.client.map.Building;
+import net.gegy1000.earth.client.map.Way;
 import net.gegy1000.earth.server.util.MapPoint;
-import net.gegy1000.earth.client.map.Street;
 import net.minecraft.world.World;
 
 import java.io.BufferedReader;
@@ -49,38 +49,47 @@ public class OpenStreetMap {
     }
 
     public static TileData parse(World world, InputStream in) throws IOException {
-        Set<Street> streets = new HashSet<>();
+        Set<Way> ways = new HashSet<>();
         Set<Building> buildings = new HashSet<>();
         try {
             OsmIterator iterator = new OsmXmlIterator(in, false);
             Map<Long, OsmNode> nodes = new HashMap<>();
-            Set<OsmWay> ways = new HashSet<>();
+            Set<OsmWay> osmWays = new HashSet<>();
             for (EntityContainer container : iterator) {
                 if (container.getType() == EntityType.Node) {
                     OsmNode node = (OsmNode) container.getEntity();
                     nodes.put(node.getId(), node);
                 } else if (container.getType() == EntityType.Way) {
-                    ways.add((OsmWay) container.getEntity());
+                    osmWays.add((OsmWay) container.getEntity());
                 }
             }
-            for (OsmWay way : ways) {
+            for (OsmWay way : osmWays) {
                 Map<String, String> tags = OsmModelUtil.getTagsAsMap(way);
                 /*Earth.LOGGER.info("========");
                 for (Map.Entry<String, String> entry : tags.entrySet()) {
                     Earth.LOGGER.info(entry.getKey() + ": " + entry.getValue());
                 }
                 Earth.LOGGER.info("");*/
+                boolean railway = tags.containsKey("railway");
                 boolean highway = tags.containsKey("highway");
                 boolean waterway = tags.containsKey("waterway");
                 boolean building = tags.containsKey("building");
-                if (highway || waterway) {
+                if (highway || waterway || railway) {
+                    int lanes = 1;
+                    if (tags.containsKey("lanes")) {
+                        try {
+                            lanes = Integer.parseInt(tags.get("lanes"));
+                        } catch (NumberFormatException e) {
+                        }
+                    }
                     List<MapPoint> points = new ArrayList<>();
                     for (int i = 0; i < way.getNumberOfNodes(); i++) {
                         long nodeID = way.getNodeId(i);
                         OsmNode node = nodes.get(nodeID);
-                        points.add(new MapPoint(world, node.getLatitude(), node.getLongitude()));
+                        MapPoint point = new MapPoint(world, node.getLatitude(), node.getLongitude());
+                        points.add(point);
                     }
-                    streets.add(new Street(tags.get("name"), points, waterway));
+                    ways.add(new Way(tags.get("name"), points, 0.1 * lanes, Way.Type.fromTags(tags)));
                 } else if (building) {
                     double height = 15.0;
                     if (tags.containsKey("height")) {
@@ -101,20 +110,20 @@ public class OpenStreetMap {
         } finally {
             in.close();
         }
-        return new TileData(streets, buildings);
+        return new TileData(ways, buildings);
     }
 
     public static class TileData {
-        private Set<Street> streets;
+        private Set<Way> ways;
         private Set<Building> buildings;
 
-        public TileData(Set<Street> streets, Set<Building> buildings) {
-            this.streets = streets;
+        public TileData(Set<Way> ways, Set<Building> buildings) {
+            this.ways = ways;
             this.buildings = buildings;
         }
 
-        public Set<Street> getStreets() {
-            return this.streets;
+        public Set<Way> getWays() {
+            return this.ways;
         }
 
         public Set<Building> getBuildings() {

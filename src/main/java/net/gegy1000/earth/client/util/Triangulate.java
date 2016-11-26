@@ -4,7 +4,7 @@ import javax.vecmath.Vector2f;
 import java.util.List;
 
 public class Triangulate {
-    private static final float EPSILON = 0.0000000001F;
+    private static final float EPSILON = 0.0000000001f;
 
     public static boolean process(List<Vector2f> contour, List<Vector2f> result) {
         int contourLength = contour.size();

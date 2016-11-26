@@ -6,16 +6,16 @@ import net.minecraft.world.World;
 
 public class MapPoint {
     private final double x;
-    private final double y;
     private final double z;
     private final double latitude;
     private final double longitude;
+    private double y;
 
     public MapPoint(World world, double latitude, double longitude) {
         EarthGenerator generator = WorldTypeEarth.getGenerator(world);
         this.x = generator.fromLongitude(longitude);
         this.z = generator.fromLatitude(latitude);
-        this.y = generator.getHeightForCoords((int) this.x, (int) this.z) + 1.1;
+        this.y = generator.getGenerationHeight((int) this.x, (int) this.z) + 1.1;
         this.latitude = latitude;
         this.longitude = longitude;
     }
@@ -25,7 +25,7 @@ public class MapPoint {
         this.x = x;
         this.z = z;
         if (y < 0) {
-            this.y = generator.getHeightForCoords((int) this.x, (int) this.z) + 1.1;
+            this.y = generator.getGenerationHeight((int) this.x, (int) this.z) + 1.1;
         } else {
             this.y = y;
         }
@@ -51,5 +51,9 @@ public class MapPoint {
 
     public double getLongitude() {
         return this.longitude;
+    }
+
+    public void offset(double y) {
+        this.y += y;
     }
 }

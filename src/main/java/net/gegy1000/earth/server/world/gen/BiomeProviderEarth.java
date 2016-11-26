@@ -141,7 +141,7 @@ public class BiomeProviderEarth extends BiomeProvider {
     }
 
     private Biome getBiomeAt(int x, int z) {
-        return this.GENERATOR.getBiomeForCoords(x, z);
+        return this.GENERATOR.getGenerationBiome(x, z);
     }
 
     @Override

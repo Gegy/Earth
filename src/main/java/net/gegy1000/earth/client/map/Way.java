@@ -5,6 +5,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.world.World;
 import org.lwjgl.opengl.GL11;
 
 import javax.vecmath.Vector3d;
@@ -120,7 +121,7 @@ public class Way implements MapObject {
     public void render() {
         GlStateManager.enableCull();
         GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
-        this.type.apply();
+        this.type.prepareRender();
 
         this.buffer.bindBuffer();
         GlStateManager.glVertexPointer(3, GL11.GL_FLOAT, 12, 0);
@@ -154,13 +155,13 @@ public class Way implements MapObject {
         return this.center;
     }
 
-    public enum Type {
+    public enum Type implements MapObjectType<Way> {
+        DEFAULT(255, 0, 0),
         LARGE_ROAD(64, 64, 64),
         ROAD(0, 0, 0),
         RAILWAY(200, 128, 0),
         STREAM(0, 140, 255),
-        PATH(110, 60, 20),
-        UNKNOWN(255, 0, 0);
+        PATH(110, 60, 20);
 
         private float red;
         private float green;
@@ -172,48 +173,48 @@ public class Way implements MapObject {
             this.blue = blue / 255.0F;
         }
 
-        public void apply() {
+        @Override
+        public void prepareRender() {
             GlStateManager.color(this.red, this.green, this.blue, 1.0F);
         }
 
-        public static Type fromTags(Map<String, String> tags) {
+        @Override
+        public Way create(Map<String, String> tags, World world, List<MapPoint> points) {
+            String name = tags.get("name");
             String highway = tags.get("highway");
             String waterway = tags.get("waterway");
             String railway = tags.get("railway");
             if (highway != null) {
+                int lanes = 1;
+                if (tags.containsKey("lanes")) {
+                    try {
+                        lanes = Integer.parseInt(tags.get("lanes"));
+                    } catch (NumberFormatException e) {
+                    }
+                }
+                Type type = ROAD;
                 switch (highway) {
                     case "motorway_link":
                     case "primary_link":
                     case "primary":
                     case "motorway":
-                        return LARGE_ROAD;
-                    case "secondary_link":
-                    case "tertiary":
-                    case "secondary":
-                    case "residential":
-                        return ROAD;
+                        type = LARGE_ROAD;
+                        break;
                     case "footway":
                     case "path":
                     case "steps":
                     case "pedestrian":
                     case "track":
-                        return PATH;
+                        type = PATH;
+                        break;
                 }
-                return ROAD;
+                return new Way(name, points, Math.max(1, lanes) * 0.1, type);
+            } else if (waterway != null) {
+                return new Way(name, points, 0.08, STREAM);
+            } else if (railway != null) {
+                return new Way(name, points, 0.1, RAILWAY);
             }
-            if (waterway != null) {
-                switch (waterway) {
-                    case "boatyard":
-                    case "stream":
-                    case "dock":
-                        return STREAM;
-                }
-                return STREAM;
-            }
-            if (railway != null) {
-                return RAILWAY;
-            }
-            return UNKNOWN;
+            return null;
         }
     }
 }

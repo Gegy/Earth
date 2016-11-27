@@ -79,8 +79,7 @@ public class MapTile {
         try {
             InputStream in = OpenStreetMap.openStream(startPoint, endPoint);
             if (in != null) {
-                OpenStreetMap.TileData data = OpenStreetMap.parse(world, in);
-                this.apply(data);
+                this.mapObjects.addAll(OpenStreetMap.parse(world, in));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -89,11 +88,6 @@ public class MapTile {
 
     public Set<MapObject> getMapObjects() {
         return this.mapObjects;
-    }
-
-    public void apply(OpenStreetMap.TileData data) {
-        this.mapObjects.addAll(data.getWays());
-        this.mapObjects.addAll(data.getBuildings());
     }
 
     public void delete() {

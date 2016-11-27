@@ -23,6 +23,8 @@ import java.util.concurrent.PriorityBlockingQueue;
  * Way.Type color config
  */
 public class MapHandler {
+    public static final Set<Class<? extends MapObjectType>> MAP_OBJECT_TYPES = new HashSet<>();
+
     public static final int TILE_RANGE = 4;
 
     public static final Set<MapTile> MAP_TILES = new HashSet<>();
@@ -40,6 +42,10 @@ public class MapHandler {
     });
 
     static {
+        MAP_OBJECT_TYPES.add(Area.Type.class);
+        MAP_OBJECT_TYPES.add(Building.Type.class);
+        MAP_OBJECT_TYPES.add(Way.Type.class);
+
         Thread loadThread = new Thread(() -> {
             while (true) {
                 if (LOAD_QUEUE.size() > 0) {

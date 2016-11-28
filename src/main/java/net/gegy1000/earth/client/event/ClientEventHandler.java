@@ -25,11 +25,12 @@ import net.minecraftforge.fml.common.gameevent.InputEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.opengl.GL11;
 
+import javax.vecmath.Vector3d;
 import java.util.Set;
 
 public class ClientEventHandler {
+    public static boolean isMapEnabled;
     private static final Minecraft MC = Minecraft.getMinecraft();
-    private boolean isMapEnabled;
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onGUIOpen(GuiOpenEvent event) {
@@ -48,7 +49,7 @@ public class ClientEventHandler {
             } else if (EarthKeyBinds.KEY_SHOW_MAP.isPressed()) {
                 MC.displayGuiScreen(new MapGUI(MC.thePlayer));
             } else if (EarthKeyBinds.KEY_SHOW_MAP_OVERLAY.isPressed()) {
-                this.isMapEnabled = !this.isMapEnabled;
+                isMapEnabled = !isMapEnabled;
             }
         }
     }
@@ -56,14 +57,14 @@ public class ClientEventHandler {
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
         EntityPlayerSP player = MC.thePlayer;
-        if (this.isMapEnabled && event.phase == TickEvent.Phase.END && player != null && player.ticksExisted % 10 == 0) {
+        if (isMapEnabled && event.phase == TickEvent.Phase.END && player != null && player.ticksExisted % 10 == 0) {
             MapHandler.update(player);
         }
     }
 
     @SubscribeEvent
     public void onWorldRender(RenderWorldLastEvent event) {
-        if (this.isMapEnabled) {
+        if (isMapEnabled) {
             double viewX = TileEntityRendererDispatcher.staticPlayerX;
             double viewY = TileEntityRendererDispatcher.staticPlayerY;
             double viewZ = TileEntityRendererDispatcher.staticPlayerZ;
@@ -86,7 +87,8 @@ public class ClientEventHandler {
                             if (mapObject.hasBuilt()) {
                                 mapObject.enableState();
                                 GlStateManager.pushMatrix();
-                                GlStateManager.translate(-viewX, -viewY, -viewZ);
+                                Vector3d center = mapObject.getCenter();
+                                GlStateManager.translate(center.x - viewX, center.y - viewY, center.z - viewZ);
                                 mapObject.render();
                                 GlStateManager.popMatrix();
                                 mapObject.disableState();

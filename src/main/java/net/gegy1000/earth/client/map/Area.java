@@ -102,6 +102,7 @@ public class Area implements MapObject {
         this.buffer.bindBuffer();
 
         BUILDER.begin(GL11.GL_POLYGON, DefaultVertexFormats.POSITION_NORMAL);
+        BUILDER.setTranslation(-this.center.x, -this.center.y, -this.center.z);
         for (MapPoint point : this.points) {
             BUILDER.pos(point.getX(), top, point.getZ()).normal(0.0F, 1.0F, 0.0F).endVertex();
         }

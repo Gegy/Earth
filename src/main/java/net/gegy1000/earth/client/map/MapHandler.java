@@ -14,9 +14,7 @@ import java.util.concurrent.PriorityBlockingQueue;
  * Fix building polygons
  * Building bounds
  * Fix lighting
- * Road texture
- * OSM Credit overlay
- * Roads & Buildings in VBOs or Display lists
+ * MapObject textures
  * Fix roads on different heights
  * Building normals
  * Batch mapobjects

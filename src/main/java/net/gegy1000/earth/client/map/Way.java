@@ -94,21 +94,20 @@ public class Way implements MapObject {
         this.buffer.bindBuffer();
 
         BUILDER.begin(GL11.GL_QUAD_STRIP, DefaultVertexFormats.POSITION);
+        BUILDER.setTranslation(-this.center.x, -this.center.y, -this.center.z);
 
-        for (int i = 0; i < this.points.size(); i++) {
+        for (int i = 0; i < this.points.size() - 1; i++) {
             MapPoint point = this.points.get(i);
-            if (i < this.points.size() - 1) {
-                MapPoint next = this.points.get(i + 1);
-                double deltaX = next.getX() - point.getX();
-                double deltaZ = next.getZ() - point.getZ();
-                double length = Math.sqrt((deltaX * deltaX) + (deltaZ * deltaZ));
-                double offsetX = (this.width * deltaZ / length) / 2;
-                double offsetZ = (this.width * deltaX / length) / 2;
-                BUILDER.pos(point.getX() - offsetX, point.getY(), point.getZ() + offsetZ).endVertex();
-                BUILDER.pos(point.getX() + offsetX, point.getY(), point.getZ() - offsetZ).endVertex();
-                BUILDER.pos(next.getX() - offsetX, next.getY(), next.getZ() + offsetZ).endVertex();
-                BUILDER.pos(next.getX() + offsetX, next.getY(), next.getZ() - offsetZ).endVertex();
-            }
+            MapPoint next = this.points.get(i + 1);
+            double deltaX = next.getX() - point.getX();
+            double deltaZ = next.getZ() - point.getZ();
+            double length = Math.sqrt((deltaX * deltaX) + (deltaZ * deltaZ));
+            double offsetX = (this.width * deltaZ / length) / 2;
+            double offsetZ = (this.width * deltaX / length) / 2;
+            BUILDER.pos(point.getX() - offsetX, point.getY(), point.getZ() + offsetZ).endVertex();
+            BUILDER.pos(point.getX() + offsetX, point.getY(), point.getZ() - offsetZ).endVertex();
+            BUILDER.pos(next.getX() - offsetX, next.getY(), next.getZ() + offsetZ).endVertex();
+            BUILDER.pos(next.getX() + offsetX, next.getY(), next.getZ() - offsetZ).endVertex();
         }
 
         this.finish(this.buffer);

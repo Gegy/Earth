@@ -105,6 +105,7 @@ public class Building implements MapObject {
         this.sideBuffer.bindBuffer();
 
         BUILDER.begin(GL11.GL_QUAD_STRIP, DefaultVertexFormats.POSITION_NORMAL);
+        BUILDER.setTranslation(-this.center.x, -this.center.y, -this.center.z);
         for (MapPoint point : this.points) {
             double x = point.getX();
             double z = point.getZ();
@@ -119,6 +120,7 @@ public class Building implements MapObject {
         this.topBuffer.bindBuffer();
 
         BUILDER.begin(GL11.GL_POLYGON, DefaultVertexFormats.POSITION_NORMAL);
+        BUILDER.setTranslation(-this.center.x, -this.center.y, -this.center.z);
         for (MapPoint point : this.points) {
             BUILDER.pos(point.getX(), top, point.getZ()).normal(0.0F, 1.0F, 0.0F).endVertex();
         }
@@ -197,6 +199,11 @@ public class Building implements MapObject {
                 if (tags.containsKey("height")) {
                     try {
                         height = Double.parseDouble(tags.get("height"));
+                    } catch (NumberFormatException e) {
+                    }
+                } else if (tags.containsKey("building:levels")) {
+                    try {
+                        height = Integer.parseInt(tags.get("building:levels")) * 8.0;
                     } catch (NumberFormatException e) {
                     }
                 }

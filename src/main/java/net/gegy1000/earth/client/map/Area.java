@@ -1,6 +1,5 @@
 package net.gegy1000.earth.client.map;
 
-import net.gegy1000.earth.client.util.Triangulate;
 import net.gegy1000.earth.server.util.MapPoint;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -10,9 +9,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
 import org.lwjgl.opengl.GL11;
 
-import javax.vecmath.Vector2f;
 import javax.vecmath.Vector3d;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -31,18 +28,19 @@ public class Area implements MapObject {
     public Area(World world, List<MapPoint> points, Type type) {
         this.world = world;
         this.type = type;
-        double averageX = 0.0;
-        double averageY = 0.0;
-        double averageZ = 0.0;
         double minX = Double.MAX_VALUE, minZ = Double.MAX_VALUE;
         double maxX = Double.MIN_VALUE, maxZ = Double.MIN_VALUE;
+        double centerX = 0.0;
+        double centerY = 0.0;
+        double centerZ = 0.0;
+        int size = points.size();
         for (MapPoint point : points) {
             double x = point.getX();
             double y = point.getY();
             double z = point.getZ();
-            averageX += x;
-            averageY += y;
-            averageZ += z;
+            centerX += x / size;
+            centerY += y / size;
+            centerZ += z / size;
             if (y < this.lowestHeight) {
                 this.lowestHeight = y;
             }
@@ -62,29 +60,9 @@ public class Area implements MapObject {
                 maxZ = z;
             }
         }
-        averageX /= points.size();
-        averageY /= points.size();
-        averageZ /= points.size();
-        List<Vector2f> contour = new ArrayList<>(points.size());
-        for (MapPoint point : points) {
-            contour.add(new Vector2f((float) (point.getX() - averageX), (float) (point.getZ() - averageZ)));
-        }
-        List<Vector2f> result = new ArrayList<>();
-        if (Triangulate.process(contour, result)) {
-            List<MapPoint> triangulatedPoints = new ArrayList<>();
-            for (Vector2f vector : result) {
-                triangulatedPoints.add(new MapPoint(world, vector.getX() + averageX, vector.getY() + averageZ));
-            }
-            this.points = triangulatedPoints;
-        } else {
-            this.points = points;
-        }
-        this.center = new Vector3d(averageX, averageY, averageZ);
+        this.points = points;
+        this.center = new Vector3d(centerX, centerY, centerZ);
         this.bounds = new AxisAlignedBB(minX, this.lowestHeight, minZ, maxX, this.highestHeight, maxZ);
-    }
-
-    public List<MapPoint> getPoints() {
-        return this.points;
     }
 
     @Override

@@ -54,7 +54,7 @@ public class EarthGenerator {
     }
 
     public int getGenerationHeight(int x, int z) {
-        int width = this.heightmap.getWidth();
+        int width = this.getWidth();
         int height = this.biomemap.getHeight();
 
         double worldScale = this.getWorldScale();
@@ -196,7 +196,7 @@ public class EarthGenerator {
     }
 
     protected double sampleHeight(int x, int y) {
-        if (x < 0 || x >= this.heightmap.getWidth() || y < 0 || y >= this.heightmap.getHeight()) {
+        if (x < 0 || x >= this.getWidth() || y < 0 || y >= this.getHeight()) {
             return 0;
         }
         return this.heightmap.sample(x, y);
@@ -237,16 +237,16 @@ public class EarthGenerator {
 
     protected double fromZ(double z) {
         double scale = this.getWorldScale();
-        return 90.0 - (z + WORLD_OFFSET_Z * scale) / (this.heightmap.getHeight() * scale) * 180.0;
+        return 90.0 - (z + WORLD_OFFSET_Z * scale) / (this.getHeight() * scale) * 180.0;
     }
 
     protected double fromX(double x) {
         double scale = this.getWorldScale();
-        return (x + WORLD_OFFSET_X * scale) / (this.heightmap.getWidth() * scale) * 360.0 - 180.0;
+        return (x + WORLD_OFFSET_X * scale) / (this.getWidth() * scale) * 360.0 - 180.0;
     }
 
     protected double toZ(double latitude) {
-        int height = this.heightmap.getHeight();
+        int height = this.getHeight();
         double scale = this.getWorldScale();
         double scaledZ = height - (latitude + 90.0) / 180.0 * (double) height;
         return (scaledZ - WORLD_OFFSET_Z) * scale;
@@ -254,8 +254,16 @@ public class EarthGenerator {
 
     protected double toX(double longitude) {
         double scale = this.getWorldScale();
-        double scaledX = (longitude + 180.0) / 360.0 * (double) this.heightmap.getWidth();
+        double scaledX = (longitude + 180.0) / 360.0 * (double) this.getWidth();
         return (scaledX - WORLD_OFFSET_X) * scale;
+    }
+
+    protected int getWidth() {
+        return this.heightmap.getWidth();
+    }
+
+    protected int getHeight() {
+        return this.heightmap.getHeight();
     }
 
     protected double getWorldScale() {

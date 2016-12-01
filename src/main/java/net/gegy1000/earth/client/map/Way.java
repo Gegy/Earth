@@ -33,16 +33,17 @@ public class Way implements MapObject {
         this.width = width;
         double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, minZ = Double.MAX_VALUE;
         double maxX = Double.MIN_VALUE, maxY = Double.MIN_VALUE, maxZ = Double.MIN_VALUE;
-        double averageX = 0.0;
-        double averageY = 0.0;
-        double averageZ = 0.0;
+        double centerX = 0.0;
+        double centerY = 0.0;
+        double centerZ = 0.0;
+        int size = points.size();
         for (MapPoint point : points) {
             double x = point.getX();
             double y = point.getY();
             double z = point.getZ();
-            averageX += x;
-            averageY += y;
-            averageZ += z;
+            centerX += x / size;
+            centerY += y / size;
+            centerZ += z / size;
             if (x < minX) {
                 minX = x;
             }
@@ -62,7 +63,7 @@ public class Way implements MapObject {
                 maxZ = z;
             }
         }
-        this.center = new Vector3d(averageX, averageY, averageZ);
+        this.center = new Vector3d(centerX, centerY, centerZ);
         this.bounds = new AxisAlignedBB(minX, minY - 0.5, minZ, maxX, maxY + 0.5, maxZ);
     }
 

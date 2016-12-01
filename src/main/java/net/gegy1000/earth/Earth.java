@@ -2,6 +2,7 @@ package net.gegy1000.earth;
 
 import net.gegy1000.earth.server.proxy.ServerProxy;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
+import net.gegy1000.earth.server.world.gen.FullScaleGenerator;
 import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -13,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 @Mod(modid = Earth.MODID, name = "Earth", version = Earth.VERSION, dependencies = "required-after:llibrary@[" + Earth.LLIBRARY_VERSION + ",)")
 public class Earth {
     public static final EarthGenerator GENERATOR = new EarthGenerator();
+    public static final EarthGenerator FULL_GENERATOR = new FullScaleGenerator();
 
     @SidedProxy(clientSide = "net.gegy1000.earth.client.proxy.ClientProxy", serverSide = "net.gegy1000.earth.server.proxy.ServerProxy")
     public static ServerProxy proxy;
@@ -28,6 +30,7 @@ public class Earth {
         GENERATOR.load();
 
         new WorldTypeEarth("earth", GENERATOR);
+        new WorldTypeEarth("earth_full", FULL_GENERATOR);
 
         proxy.preInit();
     }

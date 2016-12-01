@@ -1,18 +1,15 @@
 package net.gegy1000.earth.client.map;
 
-import net.gegy1000.earth.client.util.Triangulate;
+import net.gegy1000.earth.client.util.PolygonTesselator;
 import net.gegy1000.earth.server.util.MapPoint;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
 import org.lwjgl.opengl.GL11;
 
-import javax.vecmath.Vector2f;
 import javax.vecmath.Vector3d;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -27,25 +24,26 @@ public class Building implements MapObject {
     private final Type type;
 
     private VertexBuffer sideBuffer;
-    private VertexBuffer topBuffer;
+    private List<VertexBuffer> topBuffers;
     private boolean built;
 
     public Building(World world, List<MapPoint> points, double height, Type type) {
         this.world = world;
-        this.height = height;
         this.type = type;
-        double averageX = 0.0;
-        double averageY = 0.0;
-        double averageZ = 0.0;
+        this.height = height;
         double minX = Double.MAX_VALUE, minZ = Double.MAX_VALUE;
         double maxX = Double.MIN_VALUE, maxZ = Double.MIN_VALUE;
+        double centerX = 0.0;
+        double centerY = 0.0;
+        double centerZ = 0.0;
+        int size = points.size();
         for (MapPoint point : points) {
             double x = point.getX();
             double y = point.getY();
             double z = point.getZ();
-            averageX += x;
-            averageY += y;
-            averageZ += z;
+            centerX += x / size;
+            centerY += y / size;
+            centerZ += z / size;
             if (y < this.lowestHeight) {
                 this.lowestHeight = y;
             }
@@ -65,24 +63,8 @@ public class Building implements MapObject {
                 maxZ = z;
             }
         }
-        averageX /= points.size();
-        averageY /= points.size();
-        averageZ /= points.size();
-        List<Vector2f> contour = new ArrayList<>(points.size());
-        for (MapPoint point : points) {
-            contour.add(new Vector2f((float) (point.getX() - averageX), (float) (point.getZ() - averageZ)));
-        }
-        List<Vector2f> result = new ArrayList<>();
-        if (Triangulate.process(contour, result)) {
-            List<MapPoint> triangulatedPoints = new ArrayList<>();
-            for (Vector2f vector : result) {
-                triangulatedPoints.add(new MapPoint(world, vector.getX() + averageX, vector.getY() + averageZ));
-            }
-            this.points = triangulatedPoints;
-        } else {
-            this.points = points;
-        }
-        this.center = new Vector3d(averageX, averageY, averageZ);
+        this.points = points;
+        this.center = new Vector3d(centerX, centerY, centerZ);
         this.bounds = new AxisAlignedBB(minX, this.lowestHeight, minZ, maxX, this.highestHeight + (height * 0.0225), maxZ);
     }
 
@@ -106,27 +88,32 @@ public class Building implements MapObject {
 
         BUILDER.begin(GL11.GL_QUAD_STRIP, DefaultVertexFormats.POSITION_NORMAL);
         BUILDER.setTranslation(-this.center.x, -this.center.y, -this.center.z);
-        for (MapPoint point : this.points) {
+        for (int i = 0; i < this.points.size(); i++) {
+            MapPoint point = this.points.get(i);
+            int previous = i - 1;
+            if (previous < 0) {
+                previous = this.points.size() - 1;
+            }
+            MapPoint previousPoint = this.points.get(previous);
             double x = point.getX();
             double z = point.getZ();
-            BUILDER.pos(x, this.lowestHeight, z).normal(0.0F, 0.0F, 1.0F).endVertex();
-            BUILDER.pos(x, top, z).normal(0.0F, 0.0F, 1.0F).endVertex();
+            Vector3d v1 = new Vector3d(x, this.lowestHeight, z);
+            Vector3d v2 = new Vector3d(previousPoint.getX(), this.lowestHeight, previousPoint.getZ());
+            Vector3d normal = new Vector3d();
+            v2.sub(new Vector3d(x, top, z));
+            v1.sub(new Vector3d(previousPoint.getX(), top, previousPoint.getZ()));
+            normal.cross(v1, v2);
+            normal.normalize();
+            BUILDER.pos(x, this.lowestHeight, z).normal((float) normal.x, (float) normal.y, (float) normal.z).endVertex();
+            BUILDER.pos(x, top, z).normal((float) normal.x, (float) normal.y, (float) normal.z).endVertex();
         }
 
         this.finish(this.sideBuffer);
         this.sideBuffer.unbindBuffer();
 
-        this.topBuffer = new VertexBuffer(DefaultVertexFormats.POSITION_NORMAL);
-        this.topBuffer.bindBuffer();
-
-        BUILDER.begin(GL11.GL_POLYGON, DefaultVertexFormats.POSITION_NORMAL);
-        BUILDER.setTranslation(-this.center.x, -this.center.y, -this.center.z);
-        for (MapPoint point : this.points) {
-            BUILDER.pos(point.getX(), top, point.getZ()).normal(0.0F, 1.0F, 0.0F).endVertex();
-        }
-
-        this.finish(this.topBuffer);
-        this.topBuffer.unbindBuffer();
+        PolygonTesselator.TessellationObject tessellationObject = new PolygonTesselator.TessellationObject(DefaultVertexFormats.POSITION_NORMAL, BUILDER, this.points, this.center, top);
+        PolygonTesselator.drawPoints(tessellationObject);
+        this.topBuffers = tessellationObject.getBuffers();
 
         this.built = true;
     }
@@ -137,44 +124,42 @@ public class Building implements MapObject {
 
         this.sideBuffer.bindBuffer();
         GlStateManager.glVertexPointer(3, GL11.GL_FLOAT, 16, 0);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
-        GlStateManager.glTexCoordPointer(3, GL11.GL_BYTE, 16, 12);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
+        GL11.glNormalPointer(GL11.GL_BYTE, 16, 12);
         this.sideBuffer.drawArrays(GL11.GL_QUAD_STRIP);
         this.sideBuffer.unbindBuffer();
 
-        this.topBuffer.bindBuffer();
-        GlStateManager.glVertexPointer(3, GL11.GL_FLOAT, 16, 0);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
-        GlStateManager.glTexCoordPointer(3, GL11.GL_BYTE, 16, 12);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
-        this.topBuffer.drawArrays(GL11.GL_POLYGON);
-        this.topBuffer.unbindBuffer();
+        for (VertexBuffer buffer : this.topBuffers) {
+            buffer.bindBuffer();
+            GlStateManager.glVertexPointer(3, GL11.GL_FLOAT, 16, 0);
+            GL11.glNormalPointer(GL11.GL_BYTE, 16, 12);
+            buffer.drawArrays(GL11.GL_POLYGON);
+            buffer.unbindBuffer();
+        }
     }
 
     @Override
     public void enableState() {
         GlStateManager.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
-        GlStateManager.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
+        GlStateManager.glEnableClientState(GL11.GL_NORMAL_ARRAY);
     }
 
     @Override
     public void disableState() {
         GlStateManager.glDisableClientState(GL11.GL_VERTEX_ARRAY);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
-        GlStateManager.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
+        GlStateManager.glDisableClientState(GL11.GL_NORMAL_ARRAY);
     }
 
     @Override
     public void delete() {
         if (this.sideBuffer != null) {
             this.sideBuffer.deleteGlBuffers();
+            this.sideBuffer = null;
         }
-        if (this.topBuffer != null) {
-            this.topBuffer.deleteGlBuffers();
+        if (this.topBuffers != null) {
+            for (VertexBuffer buffer : this.topBuffers) {
+                buffer.deleteGlBuffers();
+            }
+            this.topBuffers = null;
         }
         this.built = false;
     }

@@ -12,10 +12,10 @@ import java.util.concurrent.PriorityBlockingQueue;
 /**
  * TODO:
  * Fix building polygons
- * Building bounds
  * Fix lighting
  * MapObject textures
  * Fix roads on different heights
+ * Split mapobjects per block
  * Building normals
  * Batch mapobjects
  * Way.Type color config

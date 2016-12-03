@@ -1,20 +1,24 @@
 package net.gegy1000.earth.client.util;
 
 import net.gegy1000.earth.server.util.MapPoint;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.vertex.VertexFormat;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
 import org.lwjgl.util.glu.GLUtessellator;
 import org.lwjgl.util.glu.GLUtessellatorCallbackAdapter;
 
 import javax.vecmath.Vector3d;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class PolygonTesselator {
+public class PolygonTessellator {
     private static final GLUtessellator TESSELLATOR = GLU.gluNewTess();
 
-    public static void drawPoints(TessellationObject tessellationObject) {
+    public static void draw(TessellationObject tessellationObject) {
         Callback callback = new Callback();
         TESSELLATOR.gluTessCallback(GLU.GLU_TESS_BEGIN_DATA, callback);
         TESSELLATOR.gluTessCallback(GLU.GLU_TESS_VERTEX_DATA, callback);
@@ -53,6 +57,7 @@ public class PolygonTesselator {
     public static class TessellationObject {
         private VertexBuffer builder;
         private List<net.minecraft.client.renderer.vertex.VertexBuffer> buffers;
+        private Map<net.minecraft.client.renderer.vertex.VertexBuffer, Integer> types = new HashMap<>();
         private List<MapPoint> points;
         private Vector3d center;
         private VertexFormat format;
@@ -88,8 +93,10 @@ public class PolygonTesselator {
         }
 
         public void begin(int type) {
-            this.buffers.add(new net.minecraft.client.renderer.vertex.VertexBuffer(this.format));
-            this.getBuffer().bindBuffer();
+            net.minecraft.client.renderer.vertex.VertexBuffer buffer = new net.minecraft.client.renderer.vertex.VertexBuffer(this.format);
+            this.buffers.add(buffer);
+            this.types.put(buffer, type);
+            buffer.bindBuffer();
             this.builder.setTranslation(-this.center.x, -this.center.y, -this.center.z);
             this.builder.begin(type, this.format);
         }
@@ -113,6 +120,24 @@ public class PolygonTesselator {
 
         private net.minecraft.client.renderer.vertex.VertexBuffer getBuffer() {
             return this.buffers.get(this.buffers.size() - 1);
+        }
+
+        public void draw() {
+            for (net.minecraft.client.renderer.vertex.VertexBuffer buffer : this.buffers) {
+                buffer.bindBuffer();
+                GlStateManager.glVertexPointer(3, GL11.GL_FLOAT, 16, 0);
+                if (this.format.hasNormal()) {
+                    GL11.glNormalPointer(GL11.GL_BYTE, 16, 12);
+                }
+                buffer.drawArrays(this.types.get(buffer));
+                buffer.unbindBuffer();
+            }
+        }
+
+        public void delete() {
+            for (net.minecraft.client.renderer.vertex.VertexBuffer buffer : this.buffers) {
+                buffer.deleteGlBuffers();
+            }
         }
     }
 }

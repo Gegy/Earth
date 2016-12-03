@@ -1,10 +1,9 @@
 package net.gegy1000.earth.client.map;
 
+import net.gegy1000.earth.client.util.PolygonTessellator;
 import net.gegy1000.earth.server.util.MapPoint;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
 import org.lwjgl.opengl.GL11;
@@ -22,7 +21,7 @@ public class Area implements MapObject {
     private final Vector3d center;
     private final Type type;
 
-    private VertexBuffer buffer;
+    private PolygonTessellator.TessellationObject area;
     private boolean built;
 
     public Area(World world, List<MapPoint> points, Type type) {
@@ -76,17 +75,8 @@ public class Area implements MapObject {
 
         double top = this.highestHeight;
 
-        this.buffer = new VertexBuffer(DefaultVertexFormats.POSITION_NORMAL);
-        this.buffer.bindBuffer();
-
-        BUILDER.begin(GL11.GL_POLYGON, DefaultVertexFormats.POSITION_NORMAL);
-        BUILDER.setTranslation(-this.center.x, -this.center.y, -this.center.z);
-        for (MapPoint point : this.points) {
-            BUILDER.pos(point.getX(), top, point.getZ()).normal(0.0F, 1.0F, 0.0F).endVertex();
-        }
-
-        this.finish(this.buffer);
-        this.buffer.unbindBuffer();
+        this.area = new PolygonTessellator.TessellationObject(DefaultVertexFormats.POSITION_NORMAL, BUILDER, this.points, this.center, top);
+        PolygonTessellator.draw(this.area);
 
         this.built = true;
     }
@@ -95,35 +85,25 @@ public class Area implements MapObject {
     public void render() {
         this.type.prepareRender();
 
-        this.buffer.bindBuffer();
-        GlStateManager.glVertexPointer(3, GL11.GL_FLOAT, 16, 0);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
-        GlStateManager.glTexCoordPointer(3, GL11.GL_BYTE, 16, 12);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
-        this.buffer.drawArrays(GL11.GL_POLYGON);
-        this.buffer.unbindBuffer();
+        this.area.draw();
     }
 
     @Override
     public void enableState() {
         GlStateManager.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
-        GlStateManager.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
+        GlStateManager.glEnableClientState(GL11.GL_NORMAL_ARRAY);
     }
 
     @Override
     public void disableState() {
         GlStateManager.glDisableClientState(GL11.GL_VERTEX_ARRAY);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
-        GlStateManager.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
+        GlStateManager.glDisableClientState(GL11.GL_NORMAL_ARRAY);
     }
 
     @Override
     public void delete() {
-        if (this.buffer != null) {
-            this.buffer.deleteGlBuffers();
+        if (this.area != null) {
+            this.area.delete();
         }
         this.built = false;
     }

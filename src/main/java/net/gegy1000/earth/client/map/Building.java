@@ -1,6 +1,6 @@
 package net.gegy1000.earth.client.map;
 
-import net.gegy1000.earth.client.util.PolygonTesselator;
+import net.gegy1000.earth.client.util.PolygonTessellator;
 import net.gegy1000.earth.server.util.MapPoint;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -24,7 +24,7 @@ public class Building implements MapObject {
     private final Type type;
 
     private VertexBuffer sideBuffer;
-    private List<VertexBuffer> topBuffers;
+    private PolygonTessellator.TessellationObject top;
     private boolean built;
 
     public Building(World world, List<MapPoint> points, double height, Type type) {
@@ -111,9 +111,8 @@ public class Building implements MapObject {
         this.finish(this.sideBuffer);
         this.sideBuffer.unbindBuffer();
 
-        PolygonTesselator.TessellationObject tessellationObject = new PolygonTesselator.TessellationObject(DefaultVertexFormats.POSITION_NORMAL, BUILDER, this.points, this.center, top);
-        PolygonTesselator.drawPoints(tessellationObject);
-        this.topBuffers = tessellationObject.getBuffers();
+        this.top = new PolygonTessellator.TessellationObject(DefaultVertexFormats.POSITION_NORMAL, BUILDER, this.points, this.center, top);
+        PolygonTessellator.draw(this.top);
 
         this.built = true;
     }
@@ -128,13 +127,7 @@ public class Building implements MapObject {
         this.sideBuffer.drawArrays(GL11.GL_QUAD_STRIP);
         this.sideBuffer.unbindBuffer();
 
-        for (VertexBuffer buffer : this.topBuffers) {
-            buffer.bindBuffer();
-            GlStateManager.glVertexPointer(3, GL11.GL_FLOAT, 16, 0);
-            GL11.glNormalPointer(GL11.GL_BYTE, 16, 12);
-            buffer.drawArrays(GL11.GL_POLYGON);
-            buffer.unbindBuffer();
-        }
+        this.top.draw();
     }
 
     @Override
@@ -155,11 +148,9 @@ public class Building implements MapObject {
             this.sideBuffer.deleteGlBuffers();
             this.sideBuffer = null;
         }
-        if (this.topBuffers != null) {
-            for (VertexBuffer buffer : this.topBuffers) {
-                buffer.deleteGlBuffers();
-            }
-            this.topBuffers = null;
+        if (this.top != null) {
+            this.top.delete();
+            this.top = null;
         }
         this.built = false;
     }

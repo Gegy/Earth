@@ -23,7 +23,7 @@ public class StreetViewGUI extends GuiScreen {
     private String address;
 
     public StreetViewGUI(final EntityPlayer player) {
-        this.point = new MapPoint(player.worldObj, player.posX, player.posY, player.posZ);
+        this.point = new MapPoint(player.world, player.posX, player.posY, player.posZ);
 
         Thread downloadThread = new Thread(() -> {
             try {

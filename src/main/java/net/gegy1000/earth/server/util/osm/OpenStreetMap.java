@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
 
 public class OpenStreetMap {
     private static final String URL = "http://api.openstreetmap.org/api/0.6";
@@ -34,16 +35,20 @@ public class OpenStreetMap {
         String bounds = start.getLongitude() + "," + start.getLatitude() + "," + end.getLongitude() + "," + end.getLatitude();
         URL url = new URL(URL + "/map?bbox=" + bounds);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestProperty("Accept-Encoding", "gzip");
         connection.setRequestMethod("GET");
         int responseCode = connection.getResponseCode();
         if (responseCode == HttpURLConnection.HTTP_OK) {
-            return connection.getInputStream();
+            return new GZIPInputStream(connection.getInputStream());
         } else {
             Earth.LOGGER.error(url + " returned response code " + responseCode + "!");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                Earth.LOGGER.error(line);
+            InputStream in = connection.getErrorStream();
+            if (in != null) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(in)));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    Earth.LOGGER.error(line);
+                }
             }
         }
         return null;

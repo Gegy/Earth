@@ -12,7 +12,7 @@ import net.minecraft.util.text.TextComponentString;
 
 public class CommandEarthTeleport extends CommandBase {
     @Override
-    public String getCommandName() {
+    public String getName() {
         return "tplatlong";
     }
 
@@ -22,7 +22,7 @@ public class CommandEarthTeleport extends CommandBase {
     }
 
     @Override
-    public String getCommandUsage(ICommandSender sender) {
+    public String getUsage(ICommandSender sender) {
         return "tplatlong <latitude> <longitude>";
     }
 
@@ -38,7 +38,7 @@ public class CommandEarthTeleport extends CommandBase {
                 int y = generator.getGenerationHeight((int) x, (int) z) + 1;
                 if (sender instanceof EntityPlayerMP) {
                     ((EntityPlayerMP) sender).connection.setPlayerLocation(x, y, z, 0, 0);
-                    sender.addChatMessage(new TextComponentString("Teleporting to " + x + " " + y + " " + z + ", or " + latitude + " " + longitude + "."));
+                    sender.sendMessage(new TextComponentString("Teleporting to " + x + " " + y + " " + z + ", or " + latitude + " " + longitude + "."));
                 }
             } catch (Exception e) {
                 e.printStackTrace();

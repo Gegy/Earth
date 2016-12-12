@@ -14,7 +14,6 @@ apply plugin: "net.minecraftforge.gradle.forge"
 
 def mod_file = getModFile()
 version = getVersion("VERSION", mod_file)
-def llibrary_version = getVersion("LLIBRARY_VERSION", mod_file)
 group = "net.gegy1000.earth"
 archivesBaseName = "TheEarth"
 sourceCompatibility = targetCompatibility = "1.8"
@@ -22,30 +21,37 @@ sourceCompatibility = targetCompatibility = "1.8"
 minecraft {
     version = "1.10.2-12.18.2.2099"
     runDir = "minecraft"
-    mappings = "snapshot_20161015"
+    mappings = "stable_29"
 }
 
 repositories {
 	mavenCentral()
-	maven {
-		name = "ilexiconn"
-		url = "http://maven.ilexiconn.net"
-	}
     maven {
         name = "topobyte"
         url = "http://mvn.topobyte.de"
     }
 }
 
+configurations {
+    embed
+    compile.extendsFrom(embed)
+}
+
 dependencies {
-    compile "net.ilexiconn:llibrary:$llibrary_version-1.10.2:dev"
-    compile 'de.topobyte:osm4j-core:0.0.15'
-    compile 'de.topobyte:osm4j-utils:0.0.20'
-    compile 'de.topobyte:osm4j-xml:0.0.3'
-    compile 'de.topobyte:osm4j-pbf:0.0.5'
-    compile 'de.topobyte:osm4j-tbo:0.0.9'
-    compile 'de.topobyte:osm4j-geometry:0.0.10'
-    compile "com.github.glitchfiend.biomesoplenty:BiomesOPlenty:1.10.2-5.0.0.2104:deobf"
+    embed 'de.topobyte:osm4j-core:0.0.15'
+    embed 'de.topobyte:osm4j-utils:0.0.20'
+    embed 'de.topobyte:osm4j-xml:0.0.3'
+    embed 'de.topobyte:osm4j-pbf:0.0.5'
+    embed 'de.topobyte:osm4j-tbo:0.0.9'
+    embed 'de.topobyte:osm4j-geometry:0.0.10'
+}
+
+jar {
+    from configurations.embed.collect { 
+		exclude 'META-INF/LICENSE.txt' 
+		exclude 'META-INF/NOTICE.txt' 
+		it.isDirectory() ? it : zipTree(it) 
+	}
 }
 
 processResources {

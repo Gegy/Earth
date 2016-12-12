@@ -96,12 +96,12 @@ public class TeleportPlaceGUI extends GuiScreen {
     @Override
     public void actionPerformed(GuiButton button) {
         try {
-            GeoCode geocode = GeoCode.get(this.mc.theWorld, this.place);
+            GeoCode geocode = GeoCode.get(this.mc.world, this.place);
 
             if (geocode != null) {
                 final MapPoint point = geocode.getPoint();
                 if (button.id == 0) {
-                    this.mc.thePlayer.sendChatMessage("/tplatlong " + point.getLatitude() + " " + point.getLongitude());
+                    this.mc.player.sendChatMessage("/tplatlong " + point.getLatitude() + " " + point.getLongitude());
                     this.mc.displayGuiScreen(null);
                 } else if (button.id == 1) {
                     this.image = null;

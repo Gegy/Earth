@@ -41,13 +41,13 @@ public class ClientEventHandler {
 
     @SubscribeEvent
     public void onKeyPress(InputEvent.KeyInputEvent event) {
-        if (MC.theWorld.getWorldType() instanceof WorldTypeEarth) {
+        if (MC.world.getWorldType() instanceof WorldTypeEarth) {
             if (EarthKeyBinds.KEY_STREET_VIEW.isPressed()) {
-                MC.displayGuiScreen(new StreetViewGUI(MC.thePlayer));
+                MC.displayGuiScreen(new StreetViewGUI(MC.player));
             } else if (EarthKeyBinds.KEY_TELEPORT_PLACE.isPressed()) {
                 MC.displayGuiScreen(new TeleportPlaceGUI());
             } else if (EarthKeyBinds.KEY_SHOW_MAP.isPressed()) {
-                MC.displayGuiScreen(new MapGUI(MC.thePlayer));
+                MC.displayGuiScreen(new MapGUI(MC.player));
             } else if (EarthKeyBinds.KEY_SHOW_MAP_OVERLAY.isPressed()) {
                 isMapEnabled = !isMapEnabled;
             }
@@ -56,7 +56,7 @@ public class ClientEventHandler {
 
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
-        EntityPlayerSP player = MC.thePlayer;
+        EntityPlayerSP player = MC.player;
         if (isMapEnabled && event.phase == TickEvent.Phase.END && player != null && player.ticksExisted % 10 == 0) {
             MapHandler.update(player);
         }

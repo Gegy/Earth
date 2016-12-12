@@ -30,7 +30,7 @@ public class MapHandler {
 
     private static final Minecraft MC = Minecraft.getMinecraft();
     private static final Queue<MapTile> LOAD_QUEUE = new PriorityBlockingQueue<>(11, (tile1, tile2) -> {
-        EntityPlayerSP player = MC.thePlayer;
+        EntityPlayerSP player = MC.player;
         if (player != null) {
             double distance1 = player.getDistanceSqToCenter(tile1.getCenter((int) player.posY));
             double distance2 = player.getDistanceSqToCenter(tile2.getCenter((int) player.posY));
@@ -47,10 +47,10 @@ public class MapHandler {
         Thread loadThread = new Thread(() -> {
             while (true) {
                 if (LOAD_QUEUE.size() > 0) {
-                    EntityPlayerSP player = MC.thePlayer;
+                    EntityPlayerSP player = MC.player;
                     if (player != null) {
                         MapTile tile = LOAD_QUEUE.poll();
-                        tile.load(MC.theWorld);
+                        tile.load(MC.world);
                         synchronized (MAP_LOCK) {
                             MAP_TILES.add(tile);
                         }

@@ -1,14 +1,15 @@
 package net.gegy1000.earth.client.map;
 
-import net.gegy1000.earth.client.util.PolygonTessellator;
+import net.gegy1000.earth.client.util.Triangulate;
 import net.gegy1000.earth.server.util.MapPoint;
-import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
 import org.lwjgl.opengl.GL11;
 
-import javax.vecmath.Vector3d;
+import javax.vecmath.Vector2f;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -17,105 +18,46 @@ public class Area implements MapObject {
     private final List<MapPoint> points;
     private double lowestHeight = Double.MAX_VALUE;
     private double highestHeight = Double.MIN_VALUE;
-    private final AxisAlignedBB bounds;
-    private final Vector3d center;
     private final Type type;
-
-    private PolygonTessellator.TessellationObject area;
-    private boolean built;
 
     public Area(World world, List<MapPoint> points, Type type) {
         this.world = world;
         this.type = type;
-        double minX = Double.MAX_VALUE, minZ = Double.MAX_VALUE;
-        double maxX = Double.MIN_VALUE, maxZ = Double.MIN_VALUE;
-        double centerX = 0.0;
-        double centerY = 0.0;
-        double centerZ = 0.0;
-        int size = points.size();
-        for (MapPoint point : points) {
-            double x = point.getX();
-            double y = point.getY();
-            double z = point.getZ();
-            centerX += x / size;
-            centerY += y / size;
-            centerZ += z / size;
-            if (y < this.lowestHeight) {
-                this.lowestHeight = y;
-            }
-            if (y > this.highestHeight) {
-                this.highestHeight = y;
-            }
-            if (x < minX) {
-                minX = x;
-            }
-            if (x > maxX) {
-                maxX = x;
-            }
-            if (z < minZ) {
-                minZ = z;
-            }
-            if (z > maxZ) {
-                maxZ = z;
-            }
-        }
         this.points = points;
-        this.center = new Vector3d(centerX, centerY, centerZ);
-        this.bounds = new AxisAlignedBB(minX, this.lowestHeight, minZ, maxX, this.highestHeight, maxZ);
     }
 
     @Override
-    public AxisAlignedBB getBounds() {
-        return this.bounds;
-    }
+    public void render(Tessellator tessellator, VertexBuffer builder, MapPoint center) {
+        double centerX = center.getX();
+        double centerZ = center.getZ();
 
-    @Override
-    public void build() {
-        this.delete();
+        List<MapPoint> polygonPoints;
 
-        double top = this.highestHeight;
-
-        this.area = new PolygonTessellator.TessellationObject(DefaultVertexFormats.POSITION_NORMAL, BUILDER, this.points, this.center, top);
-        PolygonTessellator.draw(this.area);
-
-        this.built = true;
-    }
-
-    @Override
-    public void render() {
-        this.type.prepareRender();
-
-        this.area.draw();
-    }
-
-    @Override
-    public void enableState() {
-        GlStateManager.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-        GlStateManager.glEnableClientState(GL11.GL_NORMAL_ARRAY);
-    }
-
-    @Override
-    public void disableState() {
-        GlStateManager.glDisableClientState(GL11.GL_VERTEX_ARRAY);
-        GlStateManager.glDisableClientState(GL11.GL_NORMAL_ARRAY);
-    }
-
-    @Override
-    public void delete() {
-        if (this.area != null) {
-            this.area.delete();
+        List<Vector2f> contour = new ArrayList<>(this.points.size());
+        for (int i = 0; i < this.points.size() - 1; i++) {
+            MapPoint point = this.points.get(i);
+            contour.add(new Vector2f((float) (point.getX() - centerX), (float) (point.getZ() - centerZ)));
         }
-        this.built = false;
-    }
 
-    @Override
-    public Vector3d getCenter() {
-        return this.center;
-    }
+        List<Vector2f> result = new ArrayList<>();
+        if (Triangulate.process(contour, result)) {
+            List<MapPoint> triangulatedPoints = new ArrayList<>();
+            for (Vector2f vector : result) {
+                triangulatedPoints.add(new MapPoint(this.world, vector.getX() + centerX, vector.getY() + centerZ));
+            }
+            polygonPoints = triangulatedPoints;
+        } else {
+            polygonPoints = this.points;
+        }
 
-    @Override
-    public boolean hasBuilt() {
-        return this.built;
+        builder.begin(GL11.GL_POLYGON, DefaultVertexFormats.POSITION_NORMAL);
+        builder.setTranslation(-centerX, 0, -centerZ);
+
+        for (MapPoint point : polygonPoints) {
+            builder.pos(point.getX(), point.getY(), point.getZ()).normal(0.0F, 1.0F, 0.0F).endVertex();
+        }
+
+        tessellator.draw();
     }
 
     public enum Type implements MapObjectType<Area> {
@@ -150,11 +92,6 @@ public class Area implements MapObject {
                 }
             }
             return null;
-        }
-
-        @Override
-        public void prepareRender() {
-            GlStateManager.color(this.red, this.green, this.blue, 0.5F);
         }
     }
 }

@@ -8,10 +8,14 @@ import net.minecraft.world.chunk.IChunkGenerator;
 
 public class WorldTypeEarth extends WorldType {
     private final EarthGenerator generator;
+    private final boolean decorate;
+    private final float cloudHeight;
 
-    public WorldTypeEarth(String name, EarthGenerator generator) {
+    public WorldTypeEarth(String name, EarthGenerator generator, boolean decorate, float cloudHeight) {
         super(name);
         this.generator = generator;
+        this.decorate = decorate;
+        this.cloudHeight = cloudHeight;
     }
 
     public static EarthGenerator getGenerator(World world) {
@@ -25,7 +29,7 @@ public class WorldTypeEarth extends WorldType {
 
     @Override
     public IChunkGenerator getChunkGenerator(World world, String generatorOptions) {
-        return new ChunkGeneratorEarth(world, world.getSeed(), this.generator);
+        return new ChunkGeneratorEarth(world, world.getSeed(), this.generator, this.decorate);
     }
 
     @Override
@@ -35,7 +39,7 @@ public class WorldTypeEarth extends WorldType {
 
     @Override
     public float getCloudHeight() {
-        return 170;
+        return this.cloudHeight;
     }
 
     public EarthGenerator getGenerator() {

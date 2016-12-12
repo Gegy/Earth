@@ -1,8 +1,11 @@
 package net.gegy1000.earth.client.map;
 
+import net.gegy1000.earth.server.world.gen.EarthGenerator;
+import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.world.World;
 
 import java.util.HashSet;
 import java.util.Queue;
@@ -15,10 +18,9 @@ import java.util.concurrent.PriorityBlockingQueue;
  * MapObject textures
  * Fix roads on different heights
  * Split mapobjects per block
- * Batch mapobjects
  * Way.Type color config
  * Objects being added multiple times
- * Single VBO for each MapTile
+ * MapTile bounds
  */
 public class MapHandler {
     public static final Set<Class<? extends MapObjectType>> MAP_OBJECT_TYPES = new HashSet<>();
@@ -81,11 +83,13 @@ public class MapHandler {
         oldTiles.addAll(MAP_TILES);
         oldTiles.addAll(LOAD_QUEUE);
 
-        int tileOffsetX = ((int) player.posX >>> MapTile.SHIFT) << MapTile.SHIFT;
-        int tileOffsetZ = ((int) player.posZ >>> MapTile.SHIFT) << MapTile.SHIFT;
+        World world = player.world;
+        EarthGenerator generator = WorldTypeEarth.getGenerator(world);
+        int latitude = (int) (generator.toLatitude(player.posZ) / MapTile.SIZE);
+        int longitude = (int) (generator.toLongitude(player.posX) / MapTile.SIZE);
         for (int x = -TILE_RANGE; x < TILE_RANGE; x++) {
             for (int z = -TILE_RANGE; z < TILE_RANGE; z++) {
-                MapTile tile = new MapTile(tileOffsetX + (x << MapTile.SHIFT), tileOffsetZ + (z << MapTile.SHIFT));
+                MapTile tile = new MapTile(world, latitude + x, longitude + z);
                 if (MAP_TILES.contains(tile) || LOAD_QUEUE.contains(tile)) {
                     oldTiles.remove(tile);
                 } else {

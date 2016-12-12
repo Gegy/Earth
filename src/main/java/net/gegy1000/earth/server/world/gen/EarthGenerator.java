@@ -269,4 +269,9 @@ public class EarthGenerator {
     protected double getWorldScale() {
         return WORLD_SCALE;
     }
+
+    public double getRatio() {
+        double blockWidth = this.getWorldScale() * this.getWidth();
+        return 40030000.0 / blockWidth;
+    }
 }

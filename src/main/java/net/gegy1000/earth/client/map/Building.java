@@ -1,71 +1,46 @@
 package net.gegy1000.earth.client.map;
 
-import net.gegy1000.earth.client.util.PolygonTessellator;
+import net.gegy1000.earth.client.util.Triangulate;
 import net.gegy1000.earth.server.util.MapPoint;
+import net.gegy1000.earth.server.world.gen.EarthGenerator;
+import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexBuffer;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
 import org.lwjgl.opengl.GL11;
 
+import javax.vecmath.Vector2f;
 import javax.vecmath.Vector3d;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class Building implements MapObject {
     private final World world;
+    private final EarthGenerator generator;
     private final List<MapPoint> points;
     private final double height;
     private double lowestHeight = Double.MAX_VALUE;
     private double highestHeight = Double.MIN_VALUE;
-    private final AxisAlignedBB bounds;
-    private final Vector3d center;
     private final Type type;
-
-    private VertexBuffer sideBuffer;
-    private PolygonTessellator.TessellationObject top;
-    private boolean built;
 
     public Building(World world, List<MapPoint> points, double height, Type type) {
         this.world = world;
+        this.generator = WorldTypeEarth.getGenerator(world);
         this.type = type;
         this.height = height;
-        double minX = Double.MAX_VALUE, minZ = Double.MAX_VALUE;
-        double maxX = Double.MIN_VALUE, maxZ = Double.MIN_VALUE;
-        double centerX = 0.0;
-        double centerY = 0.0;
-        double centerZ = 0.0;
-        int size = points.size();
         for (MapPoint point : points) {
-            double x = point.getX();
             double y = point.getY();
-            double z = point.getZ();
-            centerX += x / size;
-            centerY += y / size;
-            centerZ += z / size;
             if (y < this.lowestHeight) {
                 this.lowestHeight = y;
             }
             if (y > this.highestHeight) {
                 this.highestHeight = y;
             }
-            if (x < minX) {
-                minX = x;
-            }
-            if (x > maxX) {
-                maxX = x;
-            }
-            if (z < minZ) {
-                minZ = z;
-            }
-            if (z > maxZ) {
-                maxZ = z;
-            }
         }
         this.points = points;
-        this.center = new Vector3d(centerX, centerY, centerZ);
-        this.bounds = new AxisAlignedBB(minX, this.lowestHeight, minZ, maxX, this.highestHeight + (height * 0.0225), maxZ);
     }
 
     public double getHeight() {
@@ -73,21 +48,15 @@ public class Building implements MapObject {
     }
 
     @Override
-    public AxisAlignedBB getBounds() {
-        return this.bounds;
-    }
+    public void render(Tessellator tessellator, VertexBuffer builder, MapPoint center) {
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        double top = this.highestHeight + (this.height / this.generator.getRatio());
 
-    @Override
-    public void build() {
-        this.delete();
+        double centerX = center.getX();
+        double centerZ = center.getZ();
 
-        double top = this.highestHeight + (this.height * 0.0225);
-
-        this.sideBuffer = new VertexBuffer(DefaultVertexFormats.POSITION_NORMAL);
-        this.sideBuffer.bindBuffer();
-
-        BUILDER.begin(GL11.GL_QUAD_STRIP, DefaultVertexFormats.POSITION_NORMAL);
-        BUILDER.setTranslation(-this.center.x, -this.center.y, -this.center.z);
+        builder.begin(GL11.GL_QUAD_STRIP, DefaultVertexFormats.POSITION_NORMAL);
+        builder.setTranslation(-centerX, 0, -centerZ);
         for (int i = 0; i < this.points.size(); i++) {
             MapPoint point = this.points.get(i);
             int previous = i - 1;
@@ -104,65 +73,39 @@ public class Building implements MapObject {
             v1.sub(new Vector3d(previousPoint.getX(), top, previousPoint.getZ()));
             normal.cross(v1, v2);
             normal.normalize();
-            BUILDER.pos(x, this.lowestHeight, z).normal((float) normal.x, (float) normal.y, (float) normal.z).endVertex();
-            BUILDER.pos(x, top, z).normal((float) normal.x, (float) normal.y, (float) normal.z).endVertex();
+            builder.pos(x, this.lowestHeight, z).normal((float) normal.x, (float) normal.y, (float) normal.z).endVertex();
+            builder.pos(x, top, z).normal((float) normal.x, (float) normal.y, (float) normal.z).endVertex();
         }
 
-        this.finish(this.sideBuffer);
-        this.sideBuffer.unbindBuffer();
+        tessellator.draw();
 
-        this.top = new PolygonTessellator.TessellationObject(DefaultVertexFormats.POSITION_NORMAL, BUILDER, this.points, this.center, top);
-        PolygonTessellator.draw(this.top);
+        List<MapPoint> polygonPoints;
 
-        this.built = true;
-    }
-
-    @Override
-    public void render() {
-        this.type.prepareRender();
-
-        this.sideBuffer.bindBuffer();
-        GlStateManager.glVertexPointer(3, GL11.GL_FLOAT, 16, 0);
-        GL11.glNormalPointer(GL11.GL_BYTE, 16, 12);
-        this.sideBuffer.drawArrays(GL11.GL_QUAD_STRIP);
-        this.sideBuffer.unbindBuffer();
-
-        this.top.draw();
-    }
-
-    @Override
-    public void enableState() {
-        GlStateManager.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-        GlStateManager.glEnableClientState(GL11.GL_NORMAL_ARRAY);
-    }
-
-    @Override
-    public void disableState() {
-        GlStateManager.glDisableClientState(GL11.GL_VERTEX_ARRAY);
-        GlStateManager.glDisableClientState(GL11.GL_NORMAL_ARRAY);
-    }
-
-    @Override
-    public void delete() {
-        if (this.sideBuffer != null) {
-            this.sideBuffer.deleteGlBuffers();
-            this.sideBuffer = null;
+        List<Vector2f> contour = new ArrayList<>(this.points.size());
+        for (int i = 0; i < this.points.size() - 1; i++) {
+            MapPoint point = this.points.get(i);
+            contour.add(new Vector2f((float) (point.getX() - centerX), (float) (point.getZ() - centerZ)));
         }
-        if (this.top != null) {
-            this.top.delete();
-            this.top = null;
+
+        List<Vector2f> result = new ArrayList<>();
+        if (Triangulate.process(contour, result)) {
+            List<MapPoint> triangulatedPoints = new ArrayList<>();
+            for (Vector2f vector : result) {
+                triangulatedPoints.add(new MapPoint(this.world, vector.getX() + centerX, top,vector.getY() + centerZ));
+            }
+            polygonPoints = triangulatedPoints;
+        } else {
+            polygonPoints = this.points;
         }
-        this.built = false;
-    }
 
-    @Override
-    public Vector3d getCenter() {
-        return this.center;
-    }
+        builder.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_NORMAL);
+        builder.setTranslation(-centerX, 0, -centerZ);
 
-    @Override
-    public boolean hasBuilt() {
-        return this.built;
+        for (MapPoint point : polygonPoints) {
+            builder.pos(point.getX(), top, point.getZ()).normal(0.0F, 1.0F, 0.0F).endVertex();
+        }
+
+        tessellator.draw();
     }
 
     public enum Type implements MapObjectType<Building> {
@@ -171,7 +114,7 @@ public class Building implements MapObject {
         @Override
         public Building create(Map<String, String> tags, World world, List<MapPoint> points) {
             if (tags.containsKey("building")) {
-                double height = 8.0;
+                double height = 3.0;
                 if (tags.containsKey("height")) {
                     try {
                         height = Double.parseDouble(tags.get("height"));
@@ -179,18 +122,13 @@ public class Building implements MapObject {
                     }
                 } else if (tags.containsKey("building:levels")) {
                     try {
-                        height = Integer.parseInt(tags.get("building:levels")) * 8.0;
+                        height = Integer.parseInt(tags.get("building:levels")) * 3.0;
                     } catch (NumberFormatException e) {
                     }
                 }
                 return new Building(world, points, height, BUILDING);
             }
             return null;
-        }
-
-        @Override
-        public void prepareRender() {
-            GlStateManager.color(0.8F, 0.8F, 0.8F, 1.0F);
         }
     }
 }

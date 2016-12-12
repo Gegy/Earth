@@ -2,82 +2,70 @@ package net.gegy1000.earth.client.map;
 
 import net.gegy1000.earth.server.util.MapPoint;
 import net.gegy1000.earth.server.util.osm.OpenStreetMap;
-import net.gegy1000.earth.server.world.gen.EarthGenerator;
-import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
+import net.minecraft.client.renderer.GLAllocation;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.lwjgl.opengl.GL11;
 
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
 
 public class MapTile {
-    public static final int SIZE = 16;
-    public static final int SHIFT = 4;
+    public static final double SIZE = 0.01;
 
-    private final int x;
-    private final int z;
-    private final int tileX;
-    private final int tileZ;
-
-    private final BlockPos.MutableBlockPos center;
+    private final MapPoint minPos;
+    private final MapPoint maxPos;
+    private final MapPoint center;
+    private final int tileLat;
+    private final int tileLon;
+    private final BlockPos.MutableBlockPos centerBlock;
 
     private final Set<MapObject> mapObjects = new HashSet<>();
 
-    public MapTile(int x, int z) {
-        this.x = x;
-        this.z = z;
-        this.tileX = x >>> SHIFT;
-        this.tileZ = z >>> SHIFT;
-        int centerOffset = SIZE >> 1;
-        this.center = new BlockPos.MutableBlockPos(this.x + centerOffset, 0, this.z + centerOffset);
-    }
+    private int displayList;
+    private boolean built;
 
-    public int getX() {
-        return this.x;
-    }
-
-    public int getZ() {
-        return this.z;
-    }
-
-    public int getMaxX() {
-        return this.x + SIZE;
-    }
-
-    public int getMaxZ() {
-        return this.z + SIZE;
+    public MapTile(World world, int tileLat, int tileLon) {
+        this.tileLat = tileLat;
+        this.tileLon = tileLon;
+        this.minPos = new MapPoint(world, this.tileLat * SIZE, this.tileLon * SIZE);
+        this.maxPos = new MapPoint(world, this.minPos.getLatitude() + SIZE, this.minPos.getLongitude() + SIZE);
+        this.center = new MapPoint(world, this.minPos.getLatitude() + (SIZE / 2), this.minPos.getLongitude() + (SIZE / 2));
+        this.centerBlock = new BlockPos.MutableBlockPos((int) this.center.getX(), 0, (int) this.center.getZ());
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof MapTile) {
             MapTile tile = (MapTile) obj;
-            return tile.tileX == this.tileX && tile.tileZ == this.tileZ;
+            return tile.tileLat == this.tileLat && tile.tileLon == this.tileLon;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return this.tileZ << 8 | this.tileX;
+        return this.tileLat << 8 | this.tileLon;
     }
 
     public BlockPos getCenter(int y) {
-        this.center.setY(y);
-        return this.center;
+        this.centerBlock.setY(y);
+        return this.centerBlock;
     }
 
     public void load(World world) {
-        EarthGenerator generator = WorldTypeEarth.getGenerator(world);
-        double minX = generator.toLongitude(this.getX());
-        double maxX = generator.toLongitude(this.getMaxX());
-        double minZ = generator.toLatitude(this.getZ());
-        double maxZ = generator.toLatitude(this.getMaxZ());
-        MapPoint startPoint = new MapPoint(world, Math.min(minZ, maxZ), Math.min(minX, maxX));
-        MapPoint endPoint = new MapPoint(world, Math.max(minZ, maxZ), Math.max(minX, maxX));
+        double minLatitude = Math.min(this.minPos.getLatitude(), this.maxPos.getLatitude());
+        double minLongitude = Math.min(this.minPos.getLongitude(), this.maxPos.getLongitude());
+        double maxLatitude = Math.max(this.minPos.getLatitude(), this.maxPos.getLatitude());
+        double maxLongitude = Math.max(this.minPos.getLongitude(), this.maxPos.getLongitude());
+        MapPoint min = new MapPoint(world, minLatitude, minLongitude);
+        MapPoint max = new MapPoint(world, maxLatitude, maxLongitude);
         try {
-            InputStream in = OpenStreetMap.openStream(startPoint, endPoint);
+            InputStream in = OpenStreetMap.openStream(min, max);
             if (in != null) {
                 this.mapObjects.addAll(OpenStreetMap.parse(world, in));
             }
@@ -90,9 +78,27 @@ public class MapTile {
         return this.mapObjects;
     }
 
+    public void render(Tessellator tessellator, VertexBuffer builder, double viewX, double viewY, double viewZ) {
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(this.center.getX() - viewX, -viewY, this.center.getZ() - viewZ);
+        if (this.built) {
+            GlStateManager.callList(this.displayList);
+        } else {
+            this.displayList = GLAllocation.generateDisplayLists(1);
+            GlStateManager.glNewList(this.displayList, GL11.GL_COMPILE);
+            for (MapObject mapObject : this.mapObjects) {
+                builder.setTranslation(0, 0, 0);
+                mapObject.render(tessellator, builder, this.center);
+            }
+            GlStateManager.glEndList();
+            this.built = true;
+        }
+        GlStateManager.popMatrix();
+    }
+
     public void delete() {
-        for (MapObject mapObject : this.mapObjects) {
-            mapObject.delete();
+        if (this.built) {
+            GlStateManager.glDeleteLists(this.displayList, 1);
         }
     }
 }

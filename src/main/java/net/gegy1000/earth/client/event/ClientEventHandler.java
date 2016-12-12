@@ -6,7 +6,6 @@ import net.gegy1000.earth.client.gui.StreetViewGUI;
 import net.gegy1000.earth.client.gui.TeleportPlaceGUI;
 import net.gegy1000.earth.client.key.EarthKeyBinds;
 import net.gegy1000.earth.client.map.MapHandler;
-import net.gegy1000.earth.client.map.MapObject;
 import net.gegy1000.earth.client.map.MapTile;
 import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
 import net.minecraft.client.Minecraft;
@@ -14,6 +13,8 @@ import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.culling.ICamera;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
@@ -24,9 +25,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.opengl.GL11;
-
-import javax.vecmath.Vector3d;
-import java.util.Set;
 
 public class ClientEventHandler {
     public static boolean isMapEnabled;
@@ -71,6 +69,8 @@ public class ClientEventHandler {
             ICamera camera = new Frustum();
             camera.setPosition(viewX, viewY, viewZ);
 
+            Tessellator tessellator = Tessellator.getInstance();
+            VertexBuffer builder = tessellator.getBuffer();
             GlStateManager.disableTexture2D();
             GlStateManager.disableCull();
             GlStateManager.enableFog();
@@ -79,26 +79,15 @@ public class ClientEventHandler {
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             RenderHelper.enableStandardItemLighting();
             MC.entityRenderer.enableLightmap();
+            GlStateManager.pushMatrix();
             synchronized (MapHandler.MAP_LOCK) {
                 for (MapTile tile : MapHandler.MAP_TILES) {
-                    Set<MapObject> mapObjects = tile.getMapObjects();
-                    for (MapObject mapObject : mapObjects) {
-                        if (camera.isBoundingBoxInFrustum(mapObject.getBounds())) {
-                            if (mapObject.hasBuilt()) {
-                                mapObject.enableState();
-                                GlStateManager.pushMatrix();
-                                Vector3d center = mapObject.getCenter();
-                                GlStateManager.translate(center.x - viewX, center.y - viewY, center.z - viewZ);
-                                mapObject.render();
-                                GlStateManager.popMatrix();
-                                mapObject.disableState();
-                            } else {
-                                mapObject.build();
-                            }
-                        }
-                    }
+                    tile.render(tessellator, builder, viewX, viewY, viewZ);
                 }
             }
+            GlStateManager.popMatrix();
+            builder.setTranslation(0, 0, 0);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             MC.entityRenderer.disableLightmap();
             GlStateManager.enableCull();
             GlStateManager.enableTexture2D();

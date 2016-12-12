@@ -1,70 +1,34 @@
 package net.gegy1000.earth.client.map;
 
 import net.gegy1000.earth.server.util.MapPoint;
+import net.gegy1000.earth.server.world.gen.EarthGenerator;
+import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexBuffer;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
 import org.lwjgl.opengl.GL11;
 
-import javax.vecmath.Vector3d;
 import java.util.List;
 import java.util.Map;
 
 public class Way implements MapObject {
+    private final EarthGenerator generator;
     private final String name;
     private final List<MapPoint> points;
-    private final AxisAlignedBB bounds;
-    private final Vector3d center;
     private final double width;
     private final Type type;
 
-    private VertexBuffer buffer;
-    private boolean built;
-
-    public Way(String name, List<MapPoint> points, double width, Type type) {
+    public Way(World world, String name, List<MapPoint> points, double width, Type type) {
         this.name = name;
+        this.generator = WorldTypeEarth.getGenerator(world);
         this.points = points;
         this.type = type;
         if (this.type == Type.PATH) {
             width /= 2;
         }
-        this.width = width;
-        double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, minZ = Double.MAX_VALUE;
-        double maxX = Double.MIN_VALUE, maxY = Double.MIN_VALUE, maxZ = Double.MIN_VALUE;
-        double centerX = 0.0;
-        double centerY = 0.0;
-        double centerZ = 0.0;
-        int size = points.size();
-        for (MapPoint point : points) {
-            double x = point.getX();
-            double y = point.getY();
-            double z = point.getZ();
-            centerX += x / size;
-            centerY += y / size;
-            centerZ += z / size;
-            if (x < minX) {
-                minX = x;
-            }
-            if (x > maxX) {
-                maxX = x;
-            }
-            if (y < minY) {
-                minY = y;
-            }
-            if (y > maxY) {
-                maxY = y;
-            }
-            if (z < minZ) {
-                minZ = z;
-            }
-            if (z > maxZ) {
-                maxZ = z;
-            }
-        }
-        this.center = new Vector3d(centerX, centerY, centerZ);
-        this.bounds = new AxisAlignedBB(minX, minY - 0.5, minZ, maxX, maxY + 0.5, maxZ);
+        this.width = width / this.generator.getRatio();
     }
 
     public String getName() {
@@ -80,22 +44,15 @@ public class Way implements MapObject {
     }
 
     @Override
-    public AxisAlignedBB getBounds() {
-        return this.bounds;
-    }
+    public void render(Tessellator tessellator, VertexBuffer builder, MapPoint center) {
+        GlStateManager.enableCull();
+        GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
+        float red = this.type.red;
+        float green = this.type.green;
+        float blue = this.type.blue;
 
-    @Override
-    public boolean hasBuilt() {
-        return this.built;
-    }
-
-    @Override
-    public void build() {
-        this.buffer = new VertexBuffer(DefaultVertexFormats.POSITION);
-        this.buffer.bindBuffer();
-
-        BUILDER.begin(GL11.GL_QUAD_STRIP, DefaultVertexFormats.POSITION);
-        BUILDER.setTranslation(-this.center.x, -this.center.y, -this.center.z);
+        builder.begin(GL11.GL_QUAD_STRIP, DefaultVertexFormats.POSITION_COLOR);
+        builder.setTranslation(-center.getX(), 0, -center.getZ());
 
         for (int i = 0; i < this.points.size() - 1; i++) {
             MapPoint point = this.points.get(i);
@@ -105,54 +62,16 @@ public class Way implements MapObject {
             double length = Math.sqrt((deltaX * deltaX) + (deltaZ * deltaZ));
             double offsetX = (this.width * deltaZ / length) / 2;
             double offsetZ = (this.width * deltaX / length) / 2;
-            BUILDER.pos(point.getX() - offsetX, point.getY(), point.getZ() + offsetZ).endVertex();
-            BUILDER.pos(point.getX() + offsetX, point.getY(), point.getZ() - offsetZ).endVertex();
-            BUILDER.pos(next.getX() - offsetX, next.getY(), next.getZ() + offsetZ).endVertex();
-            BUILDER.pos(next.getX() + offsetX, next.getY(), next.getZ() - offsetZ).endVertex();
+            builder.pos(point.getX() - offsetX, point.getY(), point.getZ() + offsetZ).color(red, green, blue, 1.0F).endVertex();
+            builder.pos(point.getX() + offsetX, point.getY(), point.getZ() - offsetZ).color(red, green, blue, 1.0F).endVertex();
+            builder.pos(next.getX() - offsetX, next.getY(), next.getZ() + offsetZ).color(red, green, blue, 1.0F).endVertex();
+            builder.pos(next.getX() + offsetX, next.getY(), next.getZ() - offsetZ).color(red, green, blue, 1.0F).endVertex();
         }
 
-        this.finish(this.buffer);
-        this.buffer.unbindBuffer();
-
-        this.built = true;
-    }
-
-    @Override
-    public void render() {
-        GlStateManager.enableCull();
-        GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
-        this.type.prepareRender();
-
-        this.buffer.bindBuffer();
-        GlStateManager.glVertexPointer(3, GL11.GL_FLOAT, 12, 0);
-        this.buffer.drawArrays(GL11.GL_QUAD_STRIP);
-        this.buffer.unbindBuffer();
+        tessellator.draw();
 
         GlStateManager.cullFace(GlStateManager.CullFace.BACK);
         GlStateManager.disableCull();
-    }
-
-    @Override
-    public void enableState() {
-        GlStateManager.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-    }
-
-    @Override
-    public void disableState() {
-        GlStateManager.glDisableClientState(GL11.GL_VERTEX_ARRAY);
-    }
-
-    @Override
-    public void delete() {
-        if (this.buffer != null) {
-            this.buffer.deleteGlBuffers();
-        }
-        this.built = false;
-    }
-
-    @Override
-    public Vector3d getCenter() {
-        return this.center;
     }
 
     public enum Type implements MapObjectType<Way> {
@@ -171,11 +90,6 @@ public class Way implements MapObject {
             this.red = red / 255.0F;
             this.green = green / 255.0F;
             this.blue = blue / 255.0F;
-        }
-
-        @Override
-        public void prepareRender() {
-            GlStateManager.color(this.red, this.green, this.blue, 1.0F);
         }
 
         @Override
@@ -208,11 +122,11 @@ public class Way implements MapObject {
                         type = PATH;
                         break;
                 }
-                return new Way(name, points, Math.max(1, lanes) * 0.1, type);
+                return new Way(world, name, points, Math.max(1, lanes) * 3.0, type);
             } else if (waterway != null) {
-                return new Way(name, points, 0.08, STREAM);
+                return new Way(world, name, points, 3.0, STREAM);
             } else if (railway != null) {
-                return new Way(name, points, 0.1, RAILWAY);
+                return new Way(world, name, points, 2.0, RAILWAY);
             }
             return null;
         }

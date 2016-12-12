@@ -22,6 +22,7 @@ import java.util.Random;
 public class ChunkGeneratorEarth implements IChunkGenerator {
     protected final Random random;
     protected final World world;
+    protected final boolean decorate;
 
     protected Biome[] biomesForGeneration;
 
@@ -34,12 +35,13 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
     protected NoiseGeneratorPerlin surfaceNoise;
     protected double[] depthBuffer = new double[256];
 
-    public ChunkGeneratorEarth(World world, long seed, EarthGenerator earthGenerator) {
+    public ChunkGeneratorEarth(World world, long seed, EarthGenerator earthGenerator, boolean decorate) {
         this.world = world;
         this.world.setSeaLevel(OCEAN_HEIGHT);
         this.random = new Random(seed);
         this.earthGenerator = earthGenerator;
         this.surfaceNoise = new NoiseGeneratorPerlin(this.random, 4);
+        this.decorate = decorate;
     }
 
     public void setBlocksInChunk(int chunkX, int chunkZ, ChunkPrimer chunkPrimer) {
@@ -113,32 +115,34 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
         this.random.setSeed((long) chunkX * k + (long) chunkZ * l ^ this.world.getSeed());
         boolean generatedVillage = false;
 
-        ForgeEventFactory.onChunkPopulate(true, this, this.world, this.random, chunkX, chunkZ, generatedVillage);
+        if (this.decorate) {
+            ForgeEventFactory.onChunkPopulate(true, this, this.world, this.random, chunkX, chunkZ, generatedVillage);
 
-        biome.decorate(this.world, this.random, new BlockPos(x, 0, z));
-        if (TerrainGen.populate(this, this.world, this.random, chunkX, chunkZ, generatedVillage, PopulateChunkEvent.Populate.EventType.ANIMALS)) {
-            WorldEntitySpawner.performWorldGenSpawning(this.world, biome, x + 8, z + 8, 16, 16, this.random);
-        }
-        pos = pos.add(8, 0, 8);
+            biome.decorate(this.world, this.random, new BlockPos(x, 0, z));
+            if (TerrainGen.populate(this, this.world, this.random, chunkX, chunkZ, generatedVillage, PopulateChunkEvent.Populate.EventType.ANIMALS)) {
+                WorldEntitySpawner.performWorldGenSpawning(this.world, biome, x + 8, z + 8, 16, 16, this.random);
+            }
+            pos = pos.add(8, 0, 8);
 
-        if (TerrainGen.populate(this, this.world, this.random, chunkX, chunkZ, generatedVillage, PopulateChunkEvent.Populate.EventType.ICE)) {
-            for (int offsetX = 0; offsetX < 16; ++offsetX) {
-                for (int offsetZ = 0; offsetZ < 16; ++offsetZ) {
-                    BlockPos snowpos = this.world.getPrecipitationHeight(pos.add(offsetX, 0, offsetZ));
-                    BlockPos groundPos = snowpos.down();
+            if (TerrainGen.populate(this, this.world, this.random, chunkX, chunkZ, generatedVillage, PopulateChunkEvent.Populate.EventType.ICE)) {
+                for (int offsetX = 0; offsetX < 16; ++offsetX) {
+                    for (int offsetZ = 0; offsetZ < 16; ++offsetZ) {
+                        BlockPos snowpos = this.world.getPrecipitationHeight(pos.add(offsetX, 0, offsetZ));
+                        BlockPos groundPos = snowpos.down();
 
-                    if (this.world.canBlockFreezeWater(groundPos)) {
-                        this.world.setBlockState(groundPos, Blocks.ICE.getDefaultState(), 2);
-                    }
+                        if (this.world.canBlockFreezeWater(groundPos)) {
+                            this.world.setBlockState(groundPos, Blocks.ICE.getDefaultState(), 2);
+                        }
 
-                    if (this.world.canSnowAt(snowpos, true)) {
-                        this.world.setBlockState(snowpos, Blocks.SNOW_LAYER.getDefaultState(), 2);
+                        if (this.world.canSnowAt(snowpos, true)) {
+                            this.world.setBlockState(snowpos, Blocks.SNOW_LAYER.getDefaultState(), 2);
+                        }
                     }
                 }
             }
-        }
 
-        ForgeEventFactory.onChunkPopulate(false, this, this.world, this.random, chunkX, chunkZ, generatedVillage);
+            ForgeEventFactory.onChunkPopulate(false, this, this.world, this.random, chunkX, chunkZ, generatedVillage);
+        }
 
         BlockFalling.fallInstantly = false;
     }

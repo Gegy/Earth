@@ -10,7 +10,6 @@ import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -30,7 +29,6 @@ public class EarthMainMenuGUI extends GuiMainMenu {
     private static final ResourceLocation EARTH_TEXTURE = new ResourceLocation(Earth.MODID, "textures/gui/earth.png");
     private static final ResourceLocation CLOUDS_TEXTURE = new ResourceLocation(Earth.MODID, "textures/gui/clouds.png");
     private static final ResourceLocation MOON_TEXTURE = new ResourceLocation(Earth.MODID, "textures/gui/moon.png");
-    private static final ResourceLocation ATMOSPHERE_TEXTURE = new ResourceLocation(Earth.MODID, "textures/gui/atmosphere.png");
     private static final ResourceLocation MINECRAFT_TITLE_TEXTURE = new ResourceLocation("textures/gui/title/minecraft.png");
 
     private boolean earthCompiled;
@@ -125,15 +123,6 @@ public class EarthMainMenuGUI extends GuiMainMenu {
 
         GlStateManager.enableTexture2D();
         GlStateManager.enableDepth();
-
-//        MC.getTextureManager().bindTexture(ATMOSPHERE_TEXTURE);
-//
-//        GlStateManager.pushMatrix();
-//        GlStateManager.translate(this.width / 2.0F, this.height / 2.0F, 0.0F);
-//        GlStateManager.scale(resolution.getScaleFactor(), resolution.getScaleFactor(), 1.0F);
-//        GlStateManager.scale(0.325F, 0.325F, 1.0F);
-//        this.drawTexturedModalRect(-128, -128, 0, 0, 256, 256);
-//        GlStateManager.popMatrix();
 
         GlStateManager.pushMatrix();
         MC.getTextureManager().bindTexture(EARTH_TEXTURE);

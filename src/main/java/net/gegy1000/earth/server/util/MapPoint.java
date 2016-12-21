@@ -53,7 +53,12 @@ public class MapPoint {
         return this.longitude;
     }
 
-    public void offset(double y) {
-        this.y += y;
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(this.x);
+        builder.append(',');
+        builder.append(this.z);
+        return builder.toString();
     }
 }

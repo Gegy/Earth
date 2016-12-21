@@ -28,8 +28,8 @@ public class Earth {
     public void preInit(FMLPreInitializationEvent event) {
         GENERATOR.load();
 
-        new WorldTypeEarth("earth", GENERATOR, true, 170.0F);
-        new WorldTypeEarth("earth_full", FULL_GENERATOR, false, 260.0F);
+        new WorldTypeEarth("earth", GENERATOR, true, false,170.0F);
+        new WorldTypeEarth("earth_full", FULL_GENERATOR, false, true, 260.0F);
 
         proxy.preInit();
     }

@@ -1,10 +1,13 @@
 package net.gegy1000.earth.server.world.gen;
 
+import net.gegy1000.earth.server.util.osm.MapHandler;
+import net.gegy1000.earth.server.util.osm.MapTile;
 import net.minecraft.block.BlockFalling;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldEntitySpawner;
 import net.minecraft.world.biome.Biome;
@@ -23,6 +26,7 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
     protected final Random random;
     protected final World world;
     protected final boolean decorate;
+    protected final boolean structures;
 
     protected Biome[] biomesForGeneration;
 
@@ -35,19 +39,20 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
     protected NoiseGeneratorPerlin surfaceNoise;
     protected double[] depthBuffer = new double[256];
 
-    public ChunkGeneratorEarth(World world, long seed, EarthGenerator earthGenerator, boolean decorate) {
+    public ChunkGeneratorEarth(World world, long seed, EarthGenerator earthGenerator, boolean decorate, boolean structures) {
         this.world = world;
         this.world.setSeaLevel(OCEAN_HEIGHT);
         this.random = new Random(seed);
         this.earthGenerator = earthGenerator;
         this.surfaceNoise = new NoiseGeneratorPerlin(this.random, 4);
         this.decorate = decorate;
+        this.structures = structures;
     }
 
     public void setBlocksInChunk(int chunkX, int chunkZ, ChunkPrimer chunkPrimer) {
         this.biomesForGeneration = this.world.getBiomeProvider().getBiomesForGeneration(this.biomesForGeneration, chunkX * 4 - 2, chunkZ * 4 - 2, 10, 10);
-        int chunkWorldX = chunkX * 16;
-        int chunkWorldZ = chunkZ * 16;
+        int chunkWorldX = chunkX << 4;
+        int chunkWorldZ = chunkZ << 4;
         IBlockState bedrock = Blocks.BEDROCK.getDefaultState();
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
@@ -62,6 +67,10 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
                     }
                 }
             }
+        }
+        if (this.structures) {
+            MapTile tile = MapHandler.getTile(this.world, chunkWorldX, chunkWorldZ);
+            tile.generate(new ChunkPos(chunkX, chunkZ), chunkPrimer);
         }
     }
 

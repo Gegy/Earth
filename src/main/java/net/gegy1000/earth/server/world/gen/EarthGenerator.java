@@ -1,6 +1,8 @@
 package net.gegy1000.earth.server.world.gen;
 
 import com.google.common.collect.HashMultimap;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Point;
 import net.gegy1000.earth.server.biome.EarthBiome;
 import net.minecraft.init.Biomes;
 import net.minecraft.util.math.MathHelper;
@@ -175,6 +177,10 @@ public class EarthGenerator {
 
     public static double cubic(double[] p, double x) {
         return p[1] + 0.5 * x * (p[2] - p[0] + x * (2.0 * p[0] - 5.0 * p[1] + 4.0 * p[2] - p[3] + x * (3.0 * (p[1] - p[2]) + p[3] - p[0])));
+    }
+
+    public Coordinate toWorldCoordinates(Point point) {
+        return new Coordinate(this.fromLongitude(point.getX()), this.fromLatitude(point.getY()));
     }
 
     protected static class Bicubic {

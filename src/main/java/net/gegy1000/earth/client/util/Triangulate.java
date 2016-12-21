@@ -74,11 +74,11 @@ public class Triangulate {
         return area * 0.5F;
     }
 
-    public static boolean inside(float ax, float ay, float bx, float by, float cx, float cy, float px, float py) {
-        float as_x = px - ax;
-        float as_y = py - ay;
-        boolean p_ab = (bx - ax) * as_y - (by - ay) * as_x > 0;
-        return (cx - ax) * as_y - (cy - ay) * as_x > 0 != p_ab && (cx - bx) * (py - by) - (cy - by) * (px - bx) > 0 == p_ab;
+    public static boolean inside(float lastX, float lastY, float x, float y, float nextX, float nextY, float px, float py) {
+        float as_x = px - lastX;
+        float as_y = py - lastY;
+        boolean p_ab = (x - lastX) * as_y - (y - lastY) * as_x > 0;
+        return (nextX - lastX) * as_y - (nextY - lastY) * as_x > 0 != p_ab && (nextX - x) * (py - y) - (nextY - y) * (px - x) > 0 == p_ab;
     }
 
     private static boolean snip(List<Vector2f> contour, int lastIndex, int index, int nextIndex, int count, int[] indices) {

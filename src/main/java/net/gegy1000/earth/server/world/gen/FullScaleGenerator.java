@@ -21,7 +21,7 @@ public class FullScaleGenerator extends EarthGenerator {
 
     @Override
     public int getGenerationHeight(int x, int z) {
-        return 70;
+        return 64;
     }
 
     @Override

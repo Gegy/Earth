@@ -70,7 +70,7 @@ public class ImageDataMap {
                         for (int i = 0; i < this.tiles.length; i++) {
                             if (this.tiles[i] != null && time - this.lastAccess[i] > DEAD_TIME) {
                                 this.tiles[i] = null;
-                                Earth.LOGGER.info("Unload " + (i % this.tileCountX) + ", " + (i / this.tileCountX));
+                                Earth.LOGGER.debug("Unload " + (i % this.tileCountX) + ", " + (i / this.tileCountX));
                                 remove = true;
                             }
                         }
@@ -121,7 +121,7 @@ public class ImageDataMap {
         InputStream in = ImageDataMap.class.getResourceAsStream(this.tileAccess[x + (y * this.tileCountX)]);
         if (in != null) {
             try {
-                Earth.LOGGER.info("Load " + x + ", " + y);
+                Earth.LOGGER.debug("Load " + x + ", " + y);
                 return this.factory.create(ImageIO.read(in), this.tileWidth, this.tileHeight);
             } catch (IOException e) {
                 e.printStackTrace();

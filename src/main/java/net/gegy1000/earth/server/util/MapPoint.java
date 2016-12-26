@@ -15,7 +15,7 @@ public class MapPoint {
         EarthGenerator generator = WorldTypeEarth.getGenerator(world);
         this.x = generator.fromLongitude(longitude);
         this.z = generator.fromLatitude(latitude);
-        this.y = generator.getGenerationHeight((int) this.x, (int) this.z) + 1.1;
+        this.y = generator.getGenerationHeight((int) this.x, (int) this.z) + 1;
         this.latitude = latitude;
         this.longitude = longitude;
     }
@@ -25,7 +25,7 @@ public class MapPoint {
         this.x = x;
         this.z = z;
         if (y < 0) {
-            this.y = generator.getGenerationHeight((int) this.x, (int) this.z) + 1.1;
+            this.y = generator.getGenerationHeight((int) this.x, (int) this.z) + 1;
         } else {
             this.y = y;
         }
@@ -55,10 +55,6 @@ public class MapPoint {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(this.x);
-        builder.append(',');
-        builder.append(this.z);
-        return builder.toString();
+        return this.x + "," + this.z;
     }
 }

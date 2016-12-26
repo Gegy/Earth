@@ -4,11 +4,10 @@ import net.gegy1000.earth.server.util.MapPoint;
 import net.gegy1000.earth.server.util.SubChunkPos;
 import net.gegy1000.earth.server.util.TempFileUtil;
 import net.gegy1000.earth.server.util.osm.object.MapObject;
+import net.gegy1000.earth.server.util.osm.object.MapObjectType;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.init.Blocks;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkPrimer;
@@ -20,7 +19,11 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
@@ -34,7 +37,8 @@ public class MapTile {
     private final MapPoint maxPos;
     private final int tileLat;
     private final int tileLon;
-    private final Map<ChunkPos, Map<SubChunkPos, IBlockState>> blocks = new HashMap<>();
+    private final Map<ChunkPos, Map<SubChunkPos, IBlockState>> chunks = new HashMap<>();
+    private final Set<ChunkPos> generatedChunks = new HashSet<>();
 
     public MapTile(World world, int tileLat, int tileLon) {
         this.world = world;
@@ -63,7 +67,7 @@ public class MapTile {
         try {
             File file = TempFileUtil.getTempFile("osm/" + this.tileLat + "_" + this.tileLon + ".tile");
             if (file.exists()) {
-                Set<MapObject> mapObjects = OpenStreetMap.parse(this.world, new GZIPInputStream(new FileInputStream(file)));
+                EnumMap<MapObjectType, List<MapObject>> mapObjects = OpenStreetMap.parse(this.world, new GZIPInputStream(new FileInputStream(file)));
                 this.generateBlockCache(generator, mapObjects);
             } else {
                 file.getParentFile().mkdirs();
@@ -81,7 +85,7 @@ public class MapTile {
                     IOUtils.copy(writeIn, fileOut);
                     writeIn.close();
                     fileOut.close();
-                    Set<MapObject> mapObjects = OpenStreetMap.parse(this.world, new ByteArrayInputStream(bytes));
+                    EnumMap<MapObjectType, List<MapObject>> mapObjects = OpenStreetMap.parse(this.world, new ByteArrayInputStream(bytes));
                     this.generateBlockCache(generator, mapObjects);
                 }
             }
@@ -90,46 +94,46 @@ public class MapTile {
         }
     }
 
-    private void generateBlockCache(EarthGenerator generator, Set<MapObject> mapObjects) {
-        for (MapObject mapObject : mapObjects) {
-            Map<BlockPos, IBlockState> objectBlocks = mapObject.generate(generator);
-            for (Map.Entry<BlockPos, IBlockState> entry : objectBlocks.entrySet()) {
-                BlockPos pos = entry.getKey();
-                ChunkPos chunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
-                Map<SubChunkPos, IBlockState> chunkBlocks = this.getChunkBlocks(chunkPos);
-                chunkBlocks.put(new SubChunkPos(pos.getX(), pos.getY(), pos.getZ()), entry.getValue());
-            }
-        }
-        //Test code
-        double minX = Math.min(this.minPos.getX(), this.maxPos.getX());
-        double minZ = Math.min(this.minPos.getZ(), this.maxPos.getZ());
-        double maxX = Math.max(this.minPos.getX(), this.maxPos.getX());
-        double maxZ = Math.max(this.minPos.getZ(), this.maxPos.getZ());
-        for (int x = (int) minX; x < maxX; x++) {
-            for (int z = (int) minZ; z < maxZ; z++) {
-                BlockPos pos = new BlockPos(x, 65, z);
-                ChunkPos chunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
-                Map<SubChunkPos, IBlockState> chunkBlocks = this.getChunkBlocks(chunkPos);
-                chunkBlocks.put(new SubChunkPos(pos.getX(), pos.getY(), pos.getZ()), Blocks.REDSTONE_BLOCK.getDefaultState());
+    private void generateBlockCache(EarthGenerator generator, EnumMap<MapObjectType, List<MapObject>> mapObjects) {
+        for (int pass = 0; pass < 2; pass++) {
+            for (MapObjectType type : MapObjectType.values()) {
+                List<MapObject> typeObjects = mapObjects.get(type);
+                if (typeObjects != null) {
+                    typeObjects.sort(Comparator.comparingInt(MapObject::getLayer));
+                    for (MapObject mapObject : typeObjects) {
+                        this.generatePass(generator, pass, mapObject);
+                    }
+                }
             }
         }
     }
 
-    private Map<SubChunkPos, IBlockState> getChunkBlocks(ChunkPos chunkPos) {
-        Map<SubChunkPos, IBlockState> chunkBlocks = this.blocks.get(chunkPos);
-        if (chunkBlocks == null) {
-            chunkBlocks = new HashMap<>();
-            this.blocks.put(chunkPos, chunkBlocks);
-        }
-        return chunkBlocks;
+    private void generatePass(EarthGenerator generator, int pass, MapObject object) {
+        MapBlockAccess storage = new MapBlockAccess(this.chunks);
+        object.generate(generator, storage, pass);
+        this.applyStorage(storage);
     }
 
-    public void generate(ChunkPos pos, ChunkPrimer primer) {
-        Map<SubChunkPos, IBlockState> blocks = this.blocks.get(pos);
-        if (blocks != null) {
-            for (Map.Entry<SubChunkPos, IBlockState> entry : blocks.entrySet()) {
-                SubChunkPos blockPos = entry.getKey();
-                primer.setBlockState(blockPos.getX(), blockPos.getY(), blockPos.getZ(), entry.getValue());
+    private void applyStorage(MapBlockAccess storage) {
+        Map<ChunkPos, Map<SubChunkPos, IBlockState>> chunks = storage.getCreationChunks();
+        for (Map.Entry<ChunkPos, Map<SubChunkPos, IBlockState>> entry : chunks.entrySet()) {
+            Map<SubChunkPos, IBlockState> chunkBlocks = this.chunks.computeIfAbsent(entry.getKey(), pos -> new HashMap<>());
+            Map<SubChunkPos, IBlockState> objectBlocks = entry.getValue();
+            for (Map.Entry<SubChunkPos, IBlockState> block : objectBlocks.entrySet()) {
+                chunkBlocks.putIfAbsent(block.getKey(), block.getValue());
+            }
+        }
+    }
+
+    public void generate(ChunkPos chunk, ChunkPrimer primer) {
+        if (!this.generatedChunks.contains(chunk)) {
+            this.generatedChunks.add(chunk);
+            Map<SubChunkPos, IBlockState> blocks = this.chunks.get(chunk);
+            if (blocks != null) {
+                for (Map.Entry<SubChunkPos, IBlockState> entry : blocks.entrySet()) {
+                    SubChunkPos pos = entry.getKey();
+                    primer.setBlockState(pos.getX(), pos.getY(), pos.getZ(), entry.getValue());
+                }
             }
         }
     }

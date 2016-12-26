@@ -94,7 +94,7 @@ public class EarthMainMenuGUI extends GuiMainMenu {
         if (!this.earthCompiled) {
             this.earthList = GLAllocation.generateDisplayLists(1);
             this.earthCompiled = true;
-            GlStateManager.glNewList(this.earthList, GL11.GL_COMPILE);
+            GlStateManager.glNewList(this.earthList, GL11.GL_COMPILE_AND_EXECUTE);
             GlStateManager.pushMatrix();
             EARTH_SPHERE.setTextureFlag(true);
             EARTH_SPHERE.draw(resolution.getScaleFactor() * 35.0F, 32, 32);
@@ -199,7 +199,7 @@ public class EarthMainMenuGUI extends GuiMainMenu {
         if (!this.starsCompiled) {
             this.starsCompiled = true;
             this.starList = GLAllocation.generateDisplayLists(1);
-            GlStateManager.glNewList(this.starList, GL11.GL_COMPILE);
+            GlStateManager.glNewList(this.starList, GL11.GL_COMPILE_AND_EXECUTE);
             Random random = new Random(10842L);
             vertexBuffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
             for (int star = 0; star < 10000; ++star) {

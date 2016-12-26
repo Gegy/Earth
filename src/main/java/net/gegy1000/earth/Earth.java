@@ -1,6 +1,7 @@
 package net.gegy1000.earth;
 
 import net.gegy1000.earth.server.proxy.ServerProxy;
+import net.gegy1000.earth.server.util.osm.MapMaterial;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.gegy1000.earth.server.world.gen.FullScaleGenerator;
 import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
@@ -28,10 +29,12 @@ public class Earth {
     public void preInit(FMLPreInitializationEvent event) {
         GENERATOR.load();
 
-        new WorldTypeEarth("earth", GENERATOR, true, false,170.0F);
+        new WorldTypeEarth("earth", GENERATOR, true, false, 170.0F);
         new WorldTypeEarth("earth_full", FULL_GENERATOR, false, true, 260.0F);
 
         proxy.preInit();
+
+        MapMaterial.init();
     }
 
     @Mod.EventHandler

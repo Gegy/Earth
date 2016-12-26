@@ -1,12 +1,13 @@
-package net.gegy1000.earth.client.util;
+package net.gegy1000.earth.server.util;
 
-import javax.vecmath.Vector2f;
+import com.vividsolutions.jts.geom.Coordinate;
+
 import java.util.List;
 
 public class Triangulate {
-    private static final float EPSILON = 0.0000000001F;
+    private static final double EPSILON = 0.0000000001F;
 
-    public static boolean process(List<Vector2f> contour, List<Vector2f> result) {
+    public static boolean process(List<Coordinate> contour, List<Coordinate> result) {
         int contourLength = contour.size();
         if (contourLength < 3) {
             return false;
@@ -65,29 +66,29 @@ public class Triangulate {
         return true;
     }
 
-    public static float area(List<Vector2f> contour) {
+    public static double area(List<Coordinate> contour) {
         int count = contour.size();
-        float area = 0.0F;
+        double area = 0.0F;
         for (int previous = count - 1, current = 0; current < count; previous = current++) {
-            area += contour.get(previous).getX() * contour.get(current).getY() - contour.get(current).getX() * contour.get(previous).getY();
+            area += contour.get(previous).x * contour.get(current).z - contour.get(current).x * contour.get(previous).z;
         }
         return area * 0.5F;
     }
 
-    public static boolean inside(float lastX, float lastY, float x, float y, float nextX, float nextY, float px, float py) {
-        float as_x = px - lastX;
-        float as_y = py - lastY;
+    public static boolean inside(double lastX, double lastY, double x, double y, double nextX, double nextY, double px, double py) {
+        double as_x = px - lastX;
+        double as_y = py - lastY;
         boolean p_ab = (x - lastX) * as_y - (y - lastY) * as_x > 0;
         return (nextX - lastX) * as_y - (nextY - lastY) * as_x > 0 != p_ab && (nextX - x) * (py - y) - (nextY - y) * (px - x) > 0 == p_ab;
     }
 
-    private static boolean snip(List<Vector2f> contour, int lastIndex, int index, int nextIndex, int count, int[] indices) {
-        float lastX = contour.get(indices[lastIndex]).getX();
-        float lastY = contour.get(indices[lastIndex]).getY();
-        float x = contour.get(indices[index]).getX();
-        float y = contour.get(indices[index]).getY();
-        float nextX = contour.get(indices[nextIndex]).getX();
-        float nextY = contour.get(indices[nextIndex]).getY();
+    private static boolean snip(List<Coordinate> contour, int lastIndex, int index, int nextIndex, int count, int[] indices) {
+        double lastX = contour.get(indices[lastIndex]).x;
+        double lastY = contour.get(indices[lastIndex]).z;
+        double x = contour.get(indices[index]).x;
+        double y = contour.get(indices[index]).z;
+        double nextX = contour.get(indices[nextIndex]).x;
+        double nextY = contour.get(indices[nextIndex]).z;
         if ((x - lastX) * (nextY - lastY) - (y - lastY) * (nextX - lastX) < EPSILON) {
             return false;
         }
@@ -95,8 +96,8 @@ public class Triangulate {
             if (i == lastIndex || i == index || i == nextIndex) {
                 continue;
             }
-            float px = contour.get(indices[i]).getX();
-            float py = contour.get(indices[i]).getY();
+            double px = contour.get(indices[i]).x;
+            double py = contour.get(indices[i]).z;
             if (inside(lastX, lastY, x, y, nextX, nextY, px, py)) {
                 return false;
             }

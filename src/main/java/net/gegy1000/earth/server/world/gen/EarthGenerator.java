@@ -175,21 +175,13 @@ public class EarthGenerator {
         }
     }
 
-    public static double cubic(double[] p, double x) {
+    private static double cubic(double[] p, double x) {
         return p[1] + 0.5 * x * (p[2] - p[0] + x * (2.0 * p[0] - 5.0 * p[1] + 4.0 * p[2] - p[3] + x * (3.0 * (p[1] - p[2]) + p[3] - p[0])));
     }
 
-    public Coordinate toWorldCoordinates(Point point) {
-        return new Coordinate(this.fromLongitude(point.getX()), this.fromLatitude(point.getY()));
-    }
-
     protected static class Bicubic {
-        protected static final ThreadLocal<double[]> ARR_THREADSAFE = new ThreadLocal<double[]>() {
-            @Override
-            protected double[] initialValue() {
-                return new double[4];
-            }
-        };
+
+        protected static final ThreadLocal<double[]> ARR_THREADSAFE = ThreadLocal.withInitial(() -> new double[4]);
 
         public static double bicubic(double[][] p, double x, double y) {
             double[] arr = ARR_THREADSAFE.get();
@@ -200,7 +192,6 @@ public class EarthGenerator {
             return cubic(arr, x);
         }
     }
-
     protected double sampleHeight(int x, int y) {
         if (x < 0 || x >= this.getWidth() || y < 0 || y >= this.getHeight()) {
             return 0;
@@ -223,6 +214,14 @@ public class EarthGenerator {
             e.printStackTrace();
             return DEFAULT_BIOME;
         }
+    }
+
+    public Coordinate toWorldCoordinates(Point point) {
+        return new Coordinate(MathHelper.floor(this.fromLongitude(point.getX())), MathHelper.floor(this.fromLatitude(point.getY())));
+    }
+
+    public Coordinate toWorldCoordinates(Coordinate coordinate) {
+        return new Coordinate(MathHelper.floor(this.fromLongitude(coordinate.x)), MathHelper.floor(this.fromLatitude(coordinate.y)));
     }
 
     public double toLatitude(double z) {

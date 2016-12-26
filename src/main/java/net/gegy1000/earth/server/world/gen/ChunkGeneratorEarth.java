@@ -69,9 +69,17 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
             }
         }
         if (this.structures) {
-            MapTile tile = MapHandler.getTile(this.world, chunkWorldX, chunkWorldZ);
-            tile.generate(new ChunkPos(chunkX, chunkZ), chunkPrimer);
+            ChunkPos pos = new ChunkPos(chunkX, chunkZ);
+            this.generateTile(pos, chunkPrimer, chunkWorldX, chunkWorldZ);
+            this.generateTile(pos, chunkPrimer, chunkWorldX + 16, chunkWorldZ);
+            this.generateTile(pos, chunkPrimer, chunkWorldX, chunkWorldZ + 16);
+            this.generateTile(pos, chunkPrimer, chunkWorldX + 16, chunkWorldZ + 16);
         }
+    }
+
+    private void generateTile(ChunkPos pos, ChunkPrimer primer, int x, int z) {
+        MapTile tile = MapHandler.getTile(this.world, x, z);
+        tile.generate(pos, primer);
     }
 
     public void generateBiomeBlocks(int chunkX, int chunkZ, ChunkPrimer primer, Biome[] biomes) {
@@ -136,15 +144,15 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
             if (TerrainGen.populate(this, this.world, this.random, chunkX, chunkZ, generatedVillage, PopulateChunkEvent.Populate.EventType.ICE)) {
                 for (int offsetX = 0; offsetX < 16; ++offsetX) {
                     for (int offsetZ = 0; offsetZ < 16; ++offsetZ) {
-                        BlockPos snowpos = this.world.getPrecipitationHeight(pos.add(offsetX, 0, offsetZ));
-                        BlockPos groundPos = snowpos.down();
+                        BlockPos snowPos = this.world.getPrecipitationHeight(pos.add(offsetX, 0, offsetZ));
+                        BlockPos groundPos = snowPos.down();
 
                         if (this.world.canBlockFreezeWater(groundPos)) {
                             this.world.setBlockState(groundPos, Blocks.ICE.getDefaultState(), 2);
                         }
 
-                        if (this.world.canSnowAt(snowpos, true)) {
-                            this.world.setBlockState(snowpos, Blocks.SNOW_LAYER.getDefaultState(), 2);
+                        if (this.world.canSnowAt(snowPos, true)) {
+                            this.world.setBlockState(snowPos, Blocks.SNOW_LAYER.getDefaultState(), 2);
                         }
                     }
                 }

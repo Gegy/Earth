@@ -4,6 +4,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import net.gegy1000.earth.server.util.Rasterize;
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
+import net.gegy1000.earth.server.util.osm.object.MapObjectType;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
@@ -32,5 +33,10 @@ public class Lake extends Area {
                 storage.set(pos.up(height), Blocks.WATER.getDefaultState());
             }
         }
+    }
+
+    @Override
+    public MapObjectType getType() {
+        return MapObjectType.LAKE;
     }
 }

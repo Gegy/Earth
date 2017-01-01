@@ -4,6 +4,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
 import net.gegy1000.earth.server.util.Rasterize;
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
+import net.gegy1000.earth.server.util.osm.object.MapObjectType;
 import net.gegy1000.earth.server.util.osm.tag.TagHandler;
 import net.gegy1000.earth.server.util.osm.tag.TagType;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
@@ -44,5 +45,10 @@ public class Railway extends Line {
                 }
             }
         }
+    }
+
+    @Override
+    public MapObjectType getType() {
+        return MapObjectType.RAILWAY;
     }
 }

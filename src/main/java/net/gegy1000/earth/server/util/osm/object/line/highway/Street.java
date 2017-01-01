@@ -3,6 +3,7 @@ package net.gegy1000.earth.server.util.osm.object.line.highway;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
+import net.gegy1000.earth.server.util.osm.object.MapObjectType;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.minecraft.block.BlockColored;
 import net.minecraft.block.state.IBlockState;
@@ -27,7 +28,7 @@ public class Street extends Highway {
         for (BlockPos pos : quad) {
             int x = pos.getX();
             int z = pos.getZ();
-            storage.set(new BlockPos(x, generator.getGenerationHeight(x, z) + offsetY, z), this.surface);
+            storage.set(pos.up(generator.getGenerationHeight(x, z) + offsetY), this.surface);
         }
         //TODO line between each lane
         /*List<BlockPos> line = Rasterize.line(point, next, false);
@@ -48,5 +49,10 @@ public class Street extends Highway {
     @Override
     public IBlockState getDefaultSurface() {
         return SURFACE;
+    }
+
+    @Override
+    public MapObjectType getType() {
+        return MapObjectType.STREET;
     }
 }

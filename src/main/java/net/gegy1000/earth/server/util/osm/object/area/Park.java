@@ -2,6 +2,7 @@ package net.gegy1000.earth.server.util.osm.object.area;
 
 import com.vividsolutions.jts.geom.Geometry;
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
+import net.gegy1000.earth.server.util.osm.object.MapObjectType;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.minecraft.block.BlockTallGrass;
 import net.minecraft.block.state.IBlockState;
@@ -57,5 +58,10 @@ public class Park extends SpreadArea {
     @Override
     protected boolean useThickOutline() {
         return true;
+    }
+
+    @Override
+    public MapObjectType getType() {
+        return MapObjectType.PARK;
     }
 }

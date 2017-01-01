@@ -170,8 +170,7 @@ public class OpenStreetMap {
     }
 
     private static void add(EnumMap<MapObjectType, List<MapObject>> mapObjects, MapObject mapObject) {
-        MapObjectType type = MapObjectType.get(mapObject.getClass());
-        List<MapObject> typeObjects = mapObjects.computeIfAbsent(type, mapObjectType -> new ArrayList<>());
+        List<MapObject> typeObjects = mapObjects.computeIfAbsent(mapObject.getType(), mapObjectType -> new ArrayList<>());
         typeObjects.add(mapObject);
     }
 

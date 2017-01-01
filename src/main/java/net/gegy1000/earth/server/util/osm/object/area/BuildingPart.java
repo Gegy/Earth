@@ -5,6 +5,7 @@ import com.vividsolutions.jts.geom.Geometry;
 import net.gegy1000.earth.server.util.Rasterize;
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
 import net.gegy1000.earth.server.util.osm.OSMConstants;
+import net.gegy1000.earth.server.util.osm.object.MapObjectType;
 import net.gegy1000.earth.server.util.osm.tag.TagHandler;
 import net.gegy1000.earth.server.util.osm.tag.TagType;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
@@ -65,5 +66,10 @@ public class BuildingPart extends Area {
                 storage.set(pos.up(y + this.height + 1), state);
             }
         }
+    }
+
+    @Override
+    public MapObjectType getType() {
+        return MapObjectType.BUILDING_PART;
     }
 }

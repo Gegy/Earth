@@ -3,6 +3,7 @@ package net.gegy1000.earth.server.util.osm.object.line.highway;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
+import net.gegy1000.earth.server.util.osm.object.MapObjectType;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -34,5 +35,10 @@ public class Track extends Highway {
     @Override
     public IBlockState getDefaultSurface() {
         return this.defaultSurface;
+    }
+
+    @Override
+    public MapObjectType getType() {
+        return MapObjectType.TRACK;
     }
 }

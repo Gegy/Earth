@@ -39,6 +39,8 @@ public abstract class MapObject {
 
     public abstract void generate(EarthGenerator generator, MapBlockAccess storage, int pass);
 
+    public abstract MapObjectType getType();
+
     public int getLayer() {
         return this.layer;
     }

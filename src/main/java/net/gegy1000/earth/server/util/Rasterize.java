@@ -13,59 +13,55 @@ import java.util.Set;
 
 public class Rasterize {
     public static List<BlockPos> line(Coordinate start, Coordinate end, boolean thick) {
-        List<BlockPos> positions = new ArrayList<>();
-        int deltaX = MathHelper.floor(end.x - start.x);
-        int deltaY = MathHelper.floor(end.y - start.y);
-        int longest = Math.abs(deltaX);
-        int shortest = Math.abs(deltaY);
-        int deltaX1 = 0, deltaY1 = 0, deltaX2 = 0, deltaY2 = 0;
-        if (deltaX < 0) {
-            deltaX1 = -1;
-        } else if (deltaX > 0) {
-            deltaX1 = 1;
+        List<BlockPos> rasterized = new ArrayList<>();
+
+        Coordinate currentPoint = new Coordinate(MathHelper.floor(start.x), MathHelper.floor(start.y));
+
+        boolean changed = false;
+
+        int deltaX = Math.max(1, Math.abs(MathHelper.floor(end.x) - MathHelper.floor(start.x)));
+        int deltaY = Math.max(1, Math.abs(MathHelper.floor(end.y) - MathHelper.floor(start.y)));
+
+        int signumX = Integer.signum(MathHelper.floor(end.x) - MathHelper.floor(start.x));
+        int signumY = Integer.signum(MathHelper.floor(end.y) - MathHelper.floor(start.y));
+
+        if (deltaY > deltaX) {
+            int tmp = deltaX;
+            deltaX = deltaY;
+            deltaY = tmp;
+            changed = true;
         }
-        if (deltaY < 0) {
-            deltaY1 = -1;
-        } else if (deltaY > 0) {
-            deltaY1 = 1;
-        }
-        if (deltaX < 0) {
-            deltaX2 = -1;
-        } else if (deltaX > 0) {
-            deltaX2 = 1;
-        }
-        if (longest <= shortest) {
-            longest = Math.abs(deltaY);
-            shortest = Math.abs(deltaX);
-            if (deltaY < 0) {
-                deltaY2 = -1;
-            } else if (deltaY > 0) {
-                deltaY2 = 1;
-            }
-            deltaX2 = 0;
-        }
-        int x = MathHelper.floor(start.x);
-        int y = MathHelper.floor(start.y);
-        int numerator = longest >> 1;
-        for (int i = 0; i <= longest; i++) {
-            positions.add(new BlockPos(x, 0, y));
-            numerator += shortest;
-            if (numerator >= longest) {
-                numerator -= longest;
-                x += deltaX1;
-                if (thick) {
-                    positions.add(new BlockPos(x, 0, y));
+
+        double longLength = 2 * deltaY - deltaX;
+
+        for (int i = 0; i <= deltaX; i++) {
+            rasterized.add(new BlockPos(currentPoint.x, 0, currentPoint.y));
+
+            while (longLength >= 0) {
+                if (changed) {
+                    currentPoint.x += signumX;
+                } else {
+                    currentPoint.y += signumY;
                 }
-                y += deltaY1;
+                if (thick) {
+                    rasterized.add(new BlockPos(currentPoint.x, 0, currentPoint.y));
+                }
+                longLength = longLength - 2 * deltaX;
+            }
+
+            if (changed) {
+                currentPoint.y += signumY;
             } else {
-                x += deltaX2;
-                if (thick) {
-                    positions.add(new BlockPos(x, 0, y));
-                }
-                y += deltaY2;
+                currentPoint.x += signumX;
             }
+            if (thick) {
+                rasterized.add(new BlockPos(currentPoint.x, 0, currentPoint.y));
+            }
+
+            longLength = longLength + 2 * deltaY;
         }
-        return positions;
+
+        return rasterized;
     }
 
     public static Set<BlockPos> polygonOutline(List<Coordinate> points) {
@@ -104,6 +100,55 @@ public class Rasterize {
         } else {
             throw new IllegalArgumentException("Rasterization requires 3 or more points!");
         }
+//        return Rasterize.fillPolygonOutline(Rasterize.polygonOutline(points));
+    }
+
+    public static Set<BlockPos> fillPolygonOutline(Set<BlockPos> outline) {
+        Set<BlockPos> rasterized = new HashSet<>();
+        int minX = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+        for (BlockPos pos : outline) {
+            int x = pos.getX();
+            int z = pos.getZ();
+            if (x < minX) {
+                minX = x;
+            }
+            if (z < minZ) {
+                minZ = z;
+            }
+            if (x > maxX) {
+                maxX = x;
+            }
+            if (z > maxZ) {
+                maxZ = z;
+            }
+        }
+        Set<BlockPos> insideLine = new HashSet<>();
+        for (int z = minZ; z <= maxZ; z++) {
+            boolean inside = false;
+            boolean lastPixel = false;
+            int x = minX - 1;
+            while (x++ <= maxX) {
+                BlockPos pos = new BlockPos(x, 0, z);
+                boolean pixel = outline.contains(pos);
+                if (!lastPixel && lastPixel != pixel) {
+                    inside = !inside;
+                    if (!inside) {
+                        rasterized.addAll(insideLine);
+                        insideLine.clear();
+                    }
+                }
+                lastPixel = pixel;
+                if (inside) {
+                    insideLine.add(pos);
+                }
+            }
+            insideLine.clear();
+        }
+        rasterized.addAll(outline);
+        return rasterized;
     }
 
     public static Set<BlockPos> quad(List<Coordinate> points) {
@@ -122,23 +167,44 @@ public class Rasterize {
         return rasterized;
     }
 
+    public static Set<BlockPos> slopeQuad(List<Coordinate> points, int startY, int endY) {
+        if (points.size() != 4) {
+            throw new IllegalArgumentException("Rasterization expected 4 points! Got " + points.size() + " points!");
+        }
+        Set<BlockPos> sloped = new HashSet<>();
+        List<BlockPos> line1 = Rasterize.line(points.get(0), points.get(2), false);
+        List<BlockPos> line2 = Rasterize.line(points.get(1), points.get(3), false);
+        int length = Math.min(line1.size(), line2.size());
+        double increment = (double) (endY - startY) / length;
+        double currentY = startY;
+        for (int i = 0; i < length; i++) {
+            BlockPos pos1 = line1.get(i);
+            BlockPos pos2 = line2.get(i);
+            List<BlockPos> line = Rasterize.line(new Coordinate(pos1.getX(), pos1.getZ()), new Coordinate(pos2.getX(), pos2.getZ()), true);
+            for (BlockPos pos : line) {
+                sloped.add(pos.up(MathHelper.floor(currentY)));
+            }
+            currentY += increment;
+        }
+        return sloped;
+    }
+
     public static Set<BlockPos> triangle(List<Coordinate> points) {
         if (points.size() != 3) {
             throw new IllegalArgumentException("Rasterization expected 3 points! Got " + points.size() + " points!");
         }
-
         Rasterize.sortDescendingY(points);
         Coordinate p1 = points.get(0);
         Coordinate p2 = points.get(1);
         Coordinate p3 = points.get(2);
         if (p2.y == p3.y) {
-            return Rasterize.bottomFlat(p1, p2, p3);
+            return Rasterize.flatSide(p1, p2, p3);
         } else if (p1.y == p2.y) {
-            return Rasterize.topFlat(p1, p2, p3);
+            return Rasterize.flatSide(p3, p1, p2);
         } else {
             Coordinate p4 = new Coordinate(MathHelper.floor(p1.x + (p2.y - p1.y) / (p3.y - p1.y) * (p3.x - p1.x)), p2.y);
-            Set<BlockPos> bottom = Rasterize.bottomFlat(p1, p2, p4);
-            Set<BlockPos> top = Rasterize.topFlat(p2, p4, p3);
+            Set<BlockPos> bottom = Rasterize.flatSide(p1, p2, p4);
+            Set<BlockPos> top = Rasterize.flatSide(p3, p2, p4);
             Set<BlockPos> rasterized = new HashSet<>();
             rasterized.addAll(bottom);
             rasterized.addAll(top);
@@ -146,47 +212,82 @@ public class Rasterize {
         }
     }
 
-    private static Set<BlockPos> bottomFlat(Coordinate p1, Coordinate p2, Coordinate p3) {
+    private static Set<BlockPos> flatSide(Coordinate p1, Coordinate p2, Coordinate p3) {
         Set<BlockPos> rasterized = new HashSet<>();
 
-        double invSlope1 = (p2.x - p1.x) / (p2.y - p1.y);
-        double invSlope2 = (p3.x - p1.x) / (p3.y - p1.y);
-        double currentX1 = p1.x;
-        double currentX2 = p1.x;
+        Coordinate currentPoint1 = new Coordinate(MathHelper.floor(p1.x), MathHelper.floor(p1.y));
+        Coordinate currentPoint2 = new Coordinate(MathHelper.floor(p1.x), MathHelper.floor(p1.y));
 
-        int minY = MathHelper.floor(p1.y);
-        int maxY = MathHelper.ceil(p2.y);
-        for (int scanLineY = minY; scanLineY <= maxY; scanLineY++) {
-            int min = MathHelper.floor(Math.min(currentX1, currentX2));
-            int max = MathHelper.ceil(Math.max(currentX1, currentX2));
-            for (int x = min; x < max; x++) {
-                rasterized.add(new BlockPos(x, 0, scanLineY));
-            }
-            currentX1 += invSlope1;
-            currentX2 += invSlope2;
+        boolean changed1 = false;
+        boolean changed2 = false;
+
+        int deltaX1 = Math.max(1, Math.abs(MathHelper.floor(p2.x) - MathHelper.floor(p1.x)));
+        int deltaY1 = Math.max(1, Math.abs(MathHelper.floor(p2.y) - MathHelper.floor(p1.y)));
+
+        int deltaX2 = Math.max(1, Math.abs(MathHelper.floor(p3.x) - MathHelper.floor(p1.x)));
+        int deltaY2 = Math.max(1, Math.abs(MathHelper.floor(p3.y) - MathHelper.floor(p1.y)));
+
+        int signumX1 = Integer.signum(MathHelper.floor(p2.x) - MathHelper.floor(p1.x));
+        int signumX2 = Integer.signum(MathHelper.floor(p3.x) - MathHelper.floor(p1.x));
+
+        int signumY1 = Integer.signum(MathHelper.floor(p2.y) - MathHelper.floor(p1.y));
+        int signumY2 = Integer.signum(MathHelper.floor(p3.y) - MathHelper.floor(p1.y));
+
+        if (deltaY1 > deltaX1) {
+            int tmp = deltaX1;
+            deltaX1 = deltaY1;
+            deltaY1 = tmp;
+            changed1 = true;
         }
 
-        return rasterized;
-    }
+        if (deltaY2 > deltaX2) {
+            int tmp = deltaX2;
+            deltaX2 = deltaY2;
+            deltaY2 = tmp;
+            changed2 = true;
+        }
 
-    private static Set<BlockPos> topFlat(Coordinate p1, Coordinate p2, Coordinate p3) {
-        Set<BlockPos> rasterized = new HashSet<>();
+        double long1 = 2 * deltaY1 - deltaX1;
+        double long2 = 2 * deltaY2 - deltaX2;
 
-        double invSlope1 = (p3.x - p1.x) / (p3.y - p1.y);
-        double invSlope2 = (p3.x - p2.x) / (p3.y - p2.y);
-        double currentX1 = p3.x;
-        double currentX2 = p3.x;
+        for (int i = 0; i <= deltaX1; i++) {
+            rasterized.addAll(line(currentPoint1, currentPoint2, false));
 
-        int minY = MathHelper.floor(p1.y);
-        int maxY = MathHelper.ceil(p3.y);
-        for (int scanLineY = maxY; scanLineY > minY; scanLineY--) {
-            int min = MathHelper.floor(Math.min(currentX1, currentX2));
-            int max = MathHelper.ceil(Math.max(currentX1, currentX2));
-            for (int x = min; x < max; x++) {
-                rasterized.add(new BlockPos(x, 0, scanLineY));
+            while (long1 >= 0) {
+                if (changed1) {
+                    currentPoint1.x += signumX1;
+                } else {
+                    currentPoint1.y += signumY1;
+                }
+                long1 = long1 - 2 * deltaX1;
             }
-            currentX1 -= invSlope1;
-            currentX2 -= invSlope2;
+
+            if (changed1) {
+                currentPoint1.y += signumY1;
+            } else {
+                currentPoint1.x += signumX1;
+            }
+
+            long1 = long1 + 2 * deltaY1;
+
+            while (MathHelper.floor(currentPoint2.y) != MathHelper.floor(currentPoint1.y)) {
+                while (long2 >= 0) {
+                    if (changed2) {
+                        currentPoint2.x += signumX2;
+                    } else {
+                        currentPoint2.y += signumY2;
+                    }
+                    long2 = long2 - 2 * deltaX2;
+                }
+
+                if (changed2) {
+                    currentPoint2.y += signumY2;
+                } else {
+                    currentPoint2.x += signumX2;
+                }
+
+                long2 = long2 + 2 * deltaY2;
+            }
         }
 
         return rasterized;

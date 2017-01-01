@@ -42,7 +42,7 @@ public abstract class Highway extends Line {
                 Coordinate point = generator.toWorldCoordinates(this.line.getPointN(i));
                 Coordinate next = generator.toWorldCoordinates(this.line.getPointN(i + 1));
                 List<Coordinate> points = this.toQuad(point, next, this.width);
-                Set<BlockPos> quad = Rasterize.quad(points);
+                Set<BlockPos> quad = Rasterize.slopeQuad(points, 0, 0);
                 this.generate(point, next, points, quad, storage, generator, offsetY);
             }
         } else if (pass == 1 && this.sidewalk.size() > 0) {
@@ -94,6 +94,8 @@ public abstract class Highway extends Line {
             case "path":
             case "cycleway":
             case "pedestrian":
+            case "stairs":
+            case "steps":
                 return new Path(generator, line, tags);
             case "track":
                 return new Track(generator, line, tags);

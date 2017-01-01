@@ -84,8 +84,6 @@ public class EarthMainMenuGUI extends GuiMainMenu {
                     button.yPosition = baseY + 48;
                 } else if (button.id == 2116463954) {
                     button.xPosition = 34;
-                } else {
-                    System.out.println(button.id);
                 }
             }
         }
@@ -94,7 +92,7 @@ public class EarthMainMenuGUI extends GuiMainMenu {
         if (!this.earthCompiled) {
             this.earthList = GLAllocation.generateDisplayLists(1);
             this.earthCompiled = true;
-            GlStateManager.glNewList(this.earthList, GL11.GL_COMPILE_AND_EXECUTE);
+            GlStateManager.glNewList(this.earthList, GL11.GL_COMPILE);
             GlStateManager.pushMatrix();
             EARTH_SPHERE.setTextureFlag(true);
             EARTH_SPHERE.draw(resolution.getScaleFactor() * 35.0F, 32, 32);
@@ -199,7 +197,7 @@ public class EarthMainMenuGUI extends GuiMainMenu {
         if (!this.starsCompiled) {
             this.starsCompiled = true;
             this.starList = GLAllocation.generateDisplayLists(1);
-            GlStateManager.glNewList(this.starList, GL11.GL_COMPILE_AND_EXECUTE);
+            GlStateManager.glNewList(this.starList, GL11.GL_COMPILE);
             Random random = new Random(10842L);
             vertexBuffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
             for (int star = 0; star < 10000; ++star) {

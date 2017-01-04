@@ -1,11 +1,16 @@
 package net.gegy1000.earth.server.world.gen;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import net.gegy1000.earth.Earth;
+import net.minecraft.util.math.ChunkPos;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.TimeUnit;
 
 public class ImageDataMap {
     private static final TileFactory DEFAULT_FACTORY = (image, width, height) -> {
@@ -22,8 +27,6 @@ public class ImageDataMap {
         return new Tile(heights, width, height);
     };
 
-    private static final long DEAD_TIME = 30000;
-
     private final int width;
     private final int height;
 
@@ -34,12 +37,18 @@ public class ImageDataMap {
     private final int tileCountY;
 
     private final String[] tileAccess;
-    private final Tile[] tiles;
-    private final long[] lastAccess;
+
+    private final LoadingCache<ChunkPos, Tile> tiles = CacheBuilder.newBuilder()
+            .expireAfterAccess(20, TimeUnit.SECONDS)
+            .build(new CacheLoader<ChunkPos, Tile>() {
+                @Override
+                public Tile load(ChunkPos pos) {
+                    return ImageDataMap.this.load(pos.chunkXPos, pos.chunkZPos);
+                }
+            });
+
 
     private final TileFactory factory;
-
-    private final Object lock = new Object();
 
     public ImageDataMap(int width, int height, int tileWidth, int tileHeight, String dataPath) {
         this(width, height, tileWidth, tileHeight, dataPath, DEFAULT_FACTORY);
@@ -53,40 +62,12 @@ public class ImageDataMap {
         this.tileCountX = width / tileWidth;
         this.tileCountY = height / tileHeight;
         this.tileAccess = new String[this.tileCountX * this.tileCountY];
-        this.tiles = new Tile[this.tileCountX * this.tileCountY];
-        this.lastAccess = new long[this.tileCountX * this.tileCountY];
         for (int x = 0; x < this.tileCountX; x++) {
             for (int y = 0; y < this.tileCountY; y++) {
                 this.tileAccess[x + (y * this.tileCountX)] = "/" + dataPath + "_" + x + "_" + y + ".png";
             }
         }
         this.factory = factory;
-        Thread thread = new Thread(() -> {
-            while (true) {
-                try {
-                    boolean remove = false;
-                    long time = System.currentTimeMillis();
-                    synchronized (this.lock) {
-                        for (int i = 0; i < this.tiles.length; i++) {
-                            if (this.tiles[i] != null && time - this.lastAccess[i] > DEAD_TIME) {
-                                this.tiles[i] = null;
-                                Earth.LOGGER.debug("Unload " + (i % this.tileCountX) + ", " + (i / this.tileCountX));
-                                remove = true;
-                            }
-                        }
-                    }
-                    if (remove) {
-                        System.gc();
-                    }
-                    Thread.sleep(1000);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        thread.setName("ImageDataMap Dead Tile");
-        thread.setDaemon(true);
-        thread.start();
     }
 
     public int sample(int x, int y) {
@@ -102,19 +83,7 @@ public class ImageDataMap {
     }
 
     protected Tile get(int x, int y) {
-        int index = x + (y * this.tileCountX);
-        Tile tile;
-        synchronized (this.lock) {
-            tile = this.tiles[index];
-            this.lastAccess[index] = System.currentTimeMillis();
-        }
-        if (tile == null) {
-            tile = this.load(x, y);
-            synchronized (this.lock) {
-                this.tiles[index] = tile;
-            }
-        }
-        return tile;
+        return this.tiles.getUnchecked(new ChunkPos(x, y));
     }
 
     protected Tile load(int x, int y) {
@@ -171,7 +140,7 @@ public class ImageDataMap {
         }
     }
 
-    public static interface TileFactory {
+    public interface TileFactory {
         Tile create(BufferedImage image, int width, int height);
     }
 }

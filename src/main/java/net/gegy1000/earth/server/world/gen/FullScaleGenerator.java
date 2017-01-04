@@ -8,7 +8,7 @@ public class FullScaleGenerator extends EarthGenerator {
     protected static final Biome DEFAULT_BIOME = Biomes.PLAINS;
 
     @Override
-    public void load()  {
+    public void load() {
     }
 
     @Override

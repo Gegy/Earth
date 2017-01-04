@@ -1,7 +1,7 @@
 package net.gegy1000.earth.client.gui;
 
-import net.gegy1000.earth.server.util.MapPoint;
 import net.gegy1000.earth.client.texture.AdvancedDynamicTexture;
+import net.gegy1000.earth.server.util.MapPoint;
 import net.gegy1000.earth.server.util.google.SatelliteMap;
 import net.gegy1000.earth.server.util.google.geocode.ReverseGeoCode;
 import net.minecraft.client.gui.GuiScreen;

@@ -1,9 +1,8 @@
 package net.gegy1000.earth.server.util.osm.object.area;
 
-import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
-import net.gegy1000.earth.server.util.Rasterize;
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
+import net.gegy1000.earth.server.util.raster.Rasterize;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
@@ -23,15 +22,11 @@ public abstract class SpreadArea extends Area {
     @Override
     public void generate(EarthGenerator generator, MapBlockAccess storage, int pass) {
         if (pass == 0) {
-            Coordinate[] coordArray = this.geometry.getCoordinates();
-            List<Coordinate> coordinates = new ArrayList<>();
-            for (Coordinate coordinate : coordArray) {
-                coordinates.add(generator.toWorldCoordinates(coordinate));
-            }
             IBlockState surface = this.getSurface();
-            Set<BlockPos> rasterizedOutline = Rasterize.polygonOutline(coordinates, this.useThickOutline());
+            Rasterize.AreaWithOutline rasterized = Rasterize.areaOutline(generator, this.geometry);
+            Set<BlockPos> rasterizedOutline = rasterized.getOutline();
+            Set<BlockPos> rasterizedArea = rasterized.getArea();
             this.generateOutline(generator, storage, rasterizedOutline);
-            Set<BlockPos> rasterizedArea = Rasterize.polygon(coordinates);
             List<BlockPos> spreadArea = new ArrayList<>(rasterizedArea.size());
             for (BlockPos pos : rasterizedArea) {
                 int height = generator.getGenerationHeight(pos.getX(), pos.getZ());

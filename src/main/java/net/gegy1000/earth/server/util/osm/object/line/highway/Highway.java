@@ -1,21 +1,18 @@
 package net.gegy1000.earth.server.util.osm.object.line.highway;
 
-import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
-import net.gegy1000.earth.server.util.Rasterize;
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
 import net.gegy1000.earth.server.util.osm.OSMConstants;
 import net.gegy1000.earth.server.util.osm.object.line.Line;
 import net.gegy1000.earth.server.util.osm.tag.TagHandler;
 import net.gegy1000.earth.server.util.osm.tag.TagType;
+import net.gegy1000.earth.server.util.raster.Rasterize;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,7 +24,7 @@ public abstract class Highway extends Line {
         super(lines, tags);
         int lanes = TagHandler.getFull(TagType.INTEGER, tags, 1, "lanes");
         double defaultWidth = laneWidth * lanes;
-        this.width = TagHandler.getFull(TagType.DOUBLE, tags, defaultWidth, "width") * generator.getRatio();
+        this.width = Math.max(1, TagHandler.getFull(TagType.DOUBLE, tags, defaultWidth, "width") * generator.getRatio());
         this.sidewalk = Sidewalk.get(tags);
     }
 
@@ -38,14 +35,16 @@ public abstract class Highway extends Line {
         }
         int offsetY = this.bridge ? MathHelper.ceil(this.layer * OSMConstants.LAYER_HEIGHT * generator.getRatio()) : 0;
         if (pass == 0) {
-            for (int i = 0; i < this.line.getNumPoints() - 1; i++) {
+            /*for (int i = 0; i < this.line.getNumPoints() - 1; i++) {
                 Coordinate point = generator.toWorldCoordinates(this.line.getPointN(i));
                 Coordinate next = generator.toWorldCoordinates(this.line.getPointN(i + 1));
                 List<Coordinate> points = this.toQuad(point, next, this.width);
                 Set<BlockPos> quad = Rasterize.slopeQuad(points, 0, 0);
                 this.generate(point, next, points, quad, storage, generator, offsetY);
-            }
-        } else if (pass == 1 && this.sidewalk.size() > 0) {
+            }*/
+            Set<BlockPos> road = Rasterize.path(generator, this.line, MathHelper.ceil(this.width));
+            this.generate(road, storage, generator, offsetY);
+        } /*else if (pass == 1 && this.sidewalk.size() > 0) {
             for (int i = 0; i < this.line.getNumPoints() - 1; i++) {
                 Coordinate point = generator.toWorldCoordinates(this.line.getPointN(i));
                 Coordinate next = generator.toWorldCoordinates(this.line.getPointN(i + 1));
@@ -66,10 +65,12 @@ public abstract class Highway extends Line {
                     }
                 }
             }
-        }
+        }*/
     }
 
-    protected abstract void generate(Coordinate point, Coordinate next, List<Coordinate> points, Set<BlockPos> quad, MapBlockAccess storage, EarthGenerator generator, int offsetY);
+//    protected abstract void generate(Coordinate point, Coordinate next, List<Coordinate> points, Set<BlockPos> quad, MapBlockAccess storage, EarthGenerator generator, int offsetY);
+
+    protected abstract void generate(Set<BlockPos> road, MapBlockAccess access, EarthGenerator generator, int offsetY);
 
     public abstract IBlockState getDefaultSurface();
 

@@ -25,7 +25,7 @@ public class EarthGenerator {
     protected static final float STANDARD_PARALLEL = 0.0F;
     protected static final float CENTRAL_MERIDIAN = 0.0F;
 
-    public void load()  {
+    public void load() {
         if (this.heightmap == null) {
             this.loadHeightmap();
         }
@@ -192,6 +192,7 @@ public class EarthGenerator {
             return cubic(arr, x);
         }
     }
+
     protected double sampleHeight(int x, int y) {
         if (x < 0 || x >= this.getWidth() || y < 0 || y >= this.getHeight()) {
             return 0;

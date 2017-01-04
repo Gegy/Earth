@@ -2,9 +2,9 @@ package net.gegy1000.earth.server.util.osm.object.area;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
-import net.gegy1000.earth.server.util.Rasterize;
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
 import net.gegy1000.earth.server.util.osm.object.MapObjectType;
+import net.gegy1000.earth.server.util.raster.Rasterize;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.minecraft.block.BlockFlower;
 import net.minecraft.block.BlockTallGrass;
@@ -44,18 +44,22 @@ public class Garden extends Area {
             for (Coordinate coordinate : coordArray) {
                 coordinates.add(generator.toWorldCoordinates(coordinate));
             }
-            Set<BlockPos> rasterizedOutline = Rasterize.polygonOutline(coordinates, true);
+            Rasterize.AreaWithOutline rasterized = Rasterize.areaOutline(generator, this.geometry);
+            Set<BlockPos> rasterizedOutline = rasterized.getOutline();
+            Set<BlockPos> rasterizedArea = rasterized.getArea();
             for (BlockPos pos : rasterizedOutline) {
-                int height = generator.getGenerationHeight(pos.getX(), pos.getZ());
-                storage.set(pos.up(height + 1), Blocks.DARK_OAK_FENCE.getDefaultState());
+                pos = pos.up(generator.getGenerationHeight(pos.getX(), pos.getZ()));
+                if (storage.get(pos) == null) {
+                    storage.set(pos.up(), Blocks.DARK_OAK_FENCE.getDefaultState());
+                }
             }
-            Set<BlockPos> rasterizedArea = Rasterize.polygon(coordinates);
             Random random = new Random(rasterizedArea.size() << 8);
             for (BlockPos pos : rasterizedArea) {
-                int height = generator.getGenerationHeight(pos.getX(), pos.getZ());
-                pos = pos.up(height);
-                if (!rasterizedOutline.contains(pos) && storage.get(pos) == null) {
-                    storage.set(pos.up(), BLOCKS[random.nextInt(BLOCKS.length)]);
+                if (!rasterizedOutline.contains(pos)) {
+                    pos = pos.up(generator.getGenerationHeight(pos.getX(), pos.getZ()));
+                    if (storage.get(pos) == null) {
+                        storage.set(pos.up(), BLOCKS[random.nextInt(BLOCKS.length)]);
+                    }
                 }
             }
         }

@@ -5,10 +5,12 @@ import net.gegy1000.earth.server.util.SubChunkPos;
 import net.gegy1000.earth.server.util.TempFileUtil;
 import net.gegy1000.earth.server.util.osm.object.MapObject;
 import net.gegy1000.earth.server.util.osm.object.MapObjectType;
+import net.gegy1000.earth.server.util.raster.Rasterize;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkPrimer;
 import org.apache.commons.io.IOUtils;
@@ -64,6 +66,13 @@ public class MapTile {
 
     public void load() {
         EarthGenerator generator = WorldTypeEarth.getGenerator(this.world);
+        double minLatitude = Math.min(this.minPos.getLatitude(), this.maxPos.getLatitude());
+        double minLongitude = Math.min(this.minPos.getLongitude(), this.maxPos.getLongitude());
+        double maxLatitude = Math.max(this.minPos.getLatitude(), this.maxPos.getLatitude());
+        double maxLongitude = Math.max(this.minPos.getLongitude(), this.maxPos.getLongitude());
+        MapPoint min = new MapPoint(this.world, minLatitude, minLongitude);
+        MapPoint max = new MapPoint(this.world, maxLatitude, maxLongitude);
+        Rasterize.setLimits(MathHelper.floor(min.getX()), MathHelper.floor(min.getZ()), MathHelper.ceil(max.getX()), MathHelper.ceil(max.getZ()));
         try {
             File file = TempFileUtil.getTempFile("osm/" + this.tileLat + "_" + this.tileLon + ".tile");
             if (file.exists()) {
@@ -71,12 +80,6 @@ public class MapTile {
                 this.generateBlockCache(generator, mapObjects);
             } else {
                 file.getParentFile().mkdirs();
-                double minLatitude = Math.min(this.minPos.getLatitude(), this.maxPos.getLatitude());
-                double minLongitude = Math.min(this.minPos.getLongitude(), this.maxPos.getLongitude());
-                double maxLatitude = Math.max(this.minPos.getLatitude(), this.maxPos.getLatitude());
-                double maxLongitude = Math.max(this.minPos.getLongitude(), this.maxPos.getLongitude());
-                MapPoint min = new MapPoint(this.world, minLatitude, minLongitude);
-                MapPoint max = new MapPoint(this.world, maxLatitude, maxLongitude);
                 InputStream in = OpenStreetMap.openStream(min, max);
                 if (in != null) {
                     byte[] bytes = IOUtils.toByteArray(in);
@@ -99,7 +102,9 @@ public class MapTile {
             for (MapObjectType type : MapObjectType.values()) {
                 List<MapObject> typeObjects = mapObjects.get(type);
                 if (typeObjects != null) {
-                    typeObjects.sort(Comparator.comparingInt(MapObject::getLayer));
+                    if (pass == 0) {
+                        typeObjects.sort(Comparator.comparingInt(MapObject::getLayer));
+                    }
                     for (MapObject mapObject : typeObjects) {
                         this.generatePass(generator, pass, mapObject);
                     }

@@ -1,6 +1,5 @@
 package net.gegy1000.earth.client.event;
 
-import net.gegy1000.earth.Earth;
 import net.gegy1000.earth.client.gui.EarthMainMenuGUI;
 import net.gegy1000.earth.client.gui.MapGUI;
 import net.gegy1000.earth.client.gui.TeleportPlaceGUI;
@@ -64,7 +63,6 @@ public class ClientEventHandler {
                                 try {
                                     StreetView streetView = StreetView.get(point, yaw, pitch);
                                     this.streetViewImages[i] = streetView.getImage();
-                                    Earth.LOGGER.info("Downloaded " + i);
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }

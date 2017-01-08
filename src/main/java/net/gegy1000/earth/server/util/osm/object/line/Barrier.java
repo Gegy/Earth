@@ -5,8 +5,8 @@ import com.vividsolutions.jts.geom.LineString;
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
 import net.gegy1000.earth.server.util.osm.MapMaterial;
 import net.gegy1000.earth.server.util.osm.object.MapObjectType;
-import net.gegy1000.earth.server.util.osm.tag.TagHandler;
 import net.gegy1000.earth.server.util.osm.tag.TagType;
+import net.gegy1000.earth.server.util.osm.tag.Tags;
 import net.gegy1000.earth.server.util.raster.Rasterize;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.minecraft.block.state.IBlockState;
@@ -15,13 +15,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 
 import java.util.List;
-import java.util.Map;
 
 public class Barrier extends Line {
     private IBlockState block = Blocks.OAK_FENCE.getDefaultState();
     private int height;
 
-    public Barrier(EarthGenerator generator, LineString lines, Map<String, String> tags) {
+    public Barrier(EarthGenerator generator, LineString lines, Tags tags) {
         super(lines, tags);
         String barrier = tags.get("barrier");
         String material = tags.get("material");
@@ -37,7 +36,7 @@ public class Barrier extends Line {
                 this.block = Blocks.COBBLESTONE_WALL.getDefaultState();
             }
         }
-        this.height = MathHelper.ceil(TagHandler.getFull(TagType.DOUBLE, tags, 1.0, "height", "barrier:height") * generator.getRatio());
+        this.height = MathHelper.ceil(tags.top("height").get(TagType.DOUBLE, 1.0) / generator.getScaleRatio());
     }
 
     @Override

@@ -1,14 +1,14 @@
 package net.gegy1000.earth.server.util.osm.object;
 
 public enum MapObjectType {
-    LAKE,
+    WATER_SOURCE,
     RIVER,
     BUILDING_PART,
     BUILDING,
     BARRIER,
     STREET,
     PATH,
-    STAIRS,
+    STEPS,
     TRACK,
     RAILWAY,
     GARDEN,

@@ -1,2 +1,3 @@
-generator.earth=Earth - 1:45
-generator.earth_full=Flat Earth - 1:1
+generator.earth_145=Earth - 1:45
+generator.osm_11=OSM - 1:1
+generator.osm_12=OSM - 1:2

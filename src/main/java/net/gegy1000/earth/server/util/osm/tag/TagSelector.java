@@ -8,7 +8,7 @@ public interface TagSelector {
     }
 
     static TagSelector baseKey(String select) {
-        return (key, value) -> TagHandler.getBaseTag(key).equals(select);
+        return (key, value) -> key.split(":")[0].equals(select);
     }
 
     static TagSelector value(String select) {

@@ -4,23 +4,18 @@ import com.vividsolutions.jts.geom.LineString;
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
 import net.gegy1000.earth.server.util.osm.MapMaterial;
 import net.gegy1000.earth.server.util.osm.object.MapObjectType;
-import net.gegy1000.earth.server.util.osm.tag.TagType;
 import net.gegy1000.earth.server.util.osm.tag.Tags;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.Set;
 
-public class Path extends Highway {
+public class Steps extends Highway {
     private IBlockState defaultSurface = MapMaterial.get("paved", null);
 
-    public Path(EarthGenerator generator, LineString lines, Tags tags) {
+    public Steps(EarthGenerator generator, LineString lines, Tags tags) {
         super(generator, lines, 2.0, tags);
-        if (tags.tag("hiking").get(TagType.BOOLEAN, false)) {
-            this.defaultSurface = Blocks.GRASS_PATH.getDefaultState();
-        }
     }
 
     @Override
@@ -37,6 +32,6 @@ public class Path extends Highway {
 
     @Override
     public MapObjectType getType() {
-        return MapObjectType.PATH;
+        return MapObjectType.STEPS;
     }
 }

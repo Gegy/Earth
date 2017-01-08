@@ -4,6 +4,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
 import net.gegy1000.earth.server.util.osm.object.MapObjectType;
+import net.gegy1000.earth.server.util.osm.tag.Tags;
 import net.gegy1000.earth.server.util.raster.Rasterize;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.minecraft.block.BlockFlower;
@@ -14,7 +15,6 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -32,7 +32,7 @@ public class Garden extends Area {
             Blocks.TALLGRASS.getDefaultState().withProperty(BlockTallGrass.TYPE, BlockTallGrass.EnumType.GRASS),
     };
 
-    public Garden(Geometry geometry, Map<String, String> tags) {
+    public Garden(Geometry geometry, Tags tags) {
         super(geometry, tags);
     }
 

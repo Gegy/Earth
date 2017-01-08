@@ -2,13 +2,13 @@ package net.gegy1000.earth.server.util.osm.object;
 
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
 import net.gegy1000.earth.server.util.osm.MapMaterial;
-import net.gegy1000.earth.server.util.osm.tag.TagHandler;
+import net.gegy1000.earth.server.util.osm.WayType;
 import net.gegy1000.earth.server.util.osm.tag.TagType;
+import net.gegy1000.earth.server.util.osm.tag.Tags;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.minecraft.block.state.IBlockState;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public abstract class MapObject {
@@ -17,10 +17,10 @@ public abstract class MapObject {
     protected IBlockState surface;
     protected IBlockState material;
 
-    public MapObject(Map<String, String> tags) {
-        this.layer = TagHandler.getTop(TagType.INTEGER, tags, 1, "layer");
-        String surface = TagHandler.getFull(TagType.STRING, tags, null, "surface");
-        String material = TagHandler.getTop(TagType.STRING, tags, null, "material");
+    public MapObject(Tags tags) {
+        this.layer = tags.top("layer").get(TagType.INTEGER, 1);
+        String surface = tags.tag("surface").get(TagType.STRING, null);
+        String material = tags.tag("material").get(TagType.STRING, null);
         if (surface != null) {
             switch (this.getSurfaceType()) {
                 case NORMAL:
@@ -40,6 +40,8 @@ public abstract class MapObject {
     public abstract void generate(EarthGenerator generator, MapBlockAccess storage, int pass);
 
     public abstract MapObjectType getType();
+
+    public abstract WayType getWayType();
 
     public int getLayer() {
         return this.layer;

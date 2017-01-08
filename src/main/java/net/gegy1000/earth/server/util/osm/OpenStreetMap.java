@@ -27,6 +27,7 @@ import net.gegy1000.earth.server.util.osm.object.MapObjectType;
 import net.gegy1000.earth.server.util.osm.object.area.Area;
 import net.gegy1000.earth.server.util.osm.object.line.Line;
 import net.gegy1000.earth.server.util.osm.object.point.Marker;
+import net.gegy1000.earth.server.util.osm.tag.Tags;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
 import net.minecraft.world.World;
@@ -67,7 +68,7 @@ public class OpenStreetMap {
             Earth.LOGGER.error(url + " returned response code " + responseCode + "!");
             InputStream in = connection.getErrorStream();
             if (in != null) {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(in)));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
                 String line;
                 while ((line = reader.readLine()) != null) {
                     Earth.LOGGER.error(line);
@@ -90,7 +91,7 @@ public class OpenStreetMap {
             Collection<OsmRelation> relations = data.getRelations().valueCollection();
             Collection<OsmWay> ways = data.getWays().valueCollection();
             for (OsmRelation relation : relations) {
-                Map<String, String> tags = OsmModelUtil.getTagsAsMap(relation);
+                Tags tags = Tags.from(OsmModelUtil.getTagsAsMap(relation));
                 WayType wayType = WayType.get(tags, null);
                 switch (wayType) {
                     case AREA:
@@ -117,7 +118,7 @@ public class OpenStreetMap {
             }
             for (OsmWay way : ways) {
                 if (!processedRelations.contains(way)) {
-                    Map<String, String> tags = OsmModelUtil.getTagsAsMap(way);
+                    Tags tags = Tags.from(OsmModelUtil.getTagsAsMap(way));
                     WayType wayType = WayType.get(tags, OsmModelUtil.nodesAsList(way));
                     switch (wayType) {
                         case AREA:

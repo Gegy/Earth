@@ -3,9 +3,14 @@ package net.gegy1000.earth.server.world.gen;
 import net.minecraft.init.Biomes;
 import net.minecraft.world.biome.Biome;
 
-public class FullScaleGenerator extends EarthGenerator {
-    protected static final double WORLD_SCALE = 926.62;
+public class OSMGenerator extends EarthGenerator {
+    protected static final double FULL_SCALE = 926.62;
     protected static final Biome DEFAULT_BIOME = Biomes.PLAINS;
+    protected final double scale;
+
+    public OSMGenerator(double ratio) {
+        this.scale = FULL_SCALE / ratio;
+    }
 
     @Override
     public void load() {
@@ -31,7 +36,7 @@ public class FullScaleGenerator extends EarthGenerator {
 
     @Override
     protected double getWorldScale() {
-        return WORLD_SCALE;
+        return this.scale;
     }
 
     @Override

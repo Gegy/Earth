@@ -5,8 +5,8 @@ import net.gegy1000.earth.server.util.osm.MapBlockAccess;
 import net.gegy1000.earth.server.util.osm.OSMConstants;
 import net.gegy1000.earth.server.util.osm.object.MapObject;
 import net.gegy1000.earth.server.util.osm.object.MapObjectType;
-import net.gegy1000.earth.server.util.osm.tag.TagHandler;
 import net.gegy1000.earth.server.util.osm.tag.TagType;
+import net.gegy1000.earth.server.util.osm.tag.Tags;
 import net.gegy1000.earth.server.util.raster.Rasterize;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.minecraft.block.state.IBlockState;
@@ -15,7 +15,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public class Building extends Area {
@@ -24,14 +23,14 @@ public class Building extends Area {
     protected int levels;
     protected int minLevel;
 
-    public Building(EarthGenerator generator, Geometry geometry, Map<String, String> tags) {
+    public Building(EarthGenerator generator, Geometry geometry, Tags tags) {
         super(geometry, tags);
-        this.levels = TagHandler.getFull(TagType.INTEGER, tags, 1, "levels", "building:levels");
-        this.minLevel = TagHandler.getFull(TagType.INTEGER, tags, 0, "min_level", "building:min_level");
-        double scaleRatio = generator.getRatio();
-        double defaultHeight = this.levels * OSMConstants.LEVEL_HEIGHT * scaleRatio;
-        this.height = MathHelper.ceil(Math.max(OSMConstants.LEVEL_HEIGHT, TagHandler.getFull(TagType.DOUBLE, tags, defaultHeight, "height", "building:height") * scaleRatio));
-        this.minHeight = MathHelper.ceil(TagHandler.getFull(TagType.DOUBLE, tags, 0.0, "min_height", "building:min_height") * scaleRatio);
+        this.levels = tags.top("levels").get(TagType.INTEGER, 1);
+        this.minLevel = tags.top("min_level").get(TagType.INTEGER, 0);
+        double scaleRatio = generator.getScaleRatio();
+        double defaultHeight = this.levels * OSMConstants.LEVEL_HEIGHT;
+        this.height = MathHelper.ceil(Math.max(OSMConstants.LEVEL_HEIGHT, tags.top("height").get(TagType.DOUBLE, defaultHeight) / scaleRatio));
+        this.minHeight = MathHelper.ceil(tags.top("min_height").get(TagType.DOUBLE, 0.0) / scaleRatio);
         if (this.surface == null) {
             this.surface = Blocks.COBBLESTONE.getDefaultState();
         }

@@ -3,6 +3,7 @@ package net.gegy1000.earth.server.util.osm.object.area;
 import com.vividsolutions.jts.geom.Geometry;
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
 import net.gegy1000.earth.server.util.osm.object.MapObjectType;
+import net.gegy1000.earth.server.util.osm.tag.Tags;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.minecraft.block.BlockTallGrass;
 import net.minecraft.block.state.IBlockState;
@@ -14,7 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class Park extends SpreadArea {
-    public Park(Geometry geometry, Map<String, String> tags) {
+    public Park(Geometry geometry, Tags tags) {
         super(geometry, tags);
     }
 

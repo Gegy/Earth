@@ -3,16 +3,16 @@ package net.gegy1000.earth.server.util.osm.object.area;
 import com.vividsolutions.jts.geom.Geometry;
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
 import net.gegy1000.earth.server.util.osm.object.MapObjectType;
+import net.gegy1000.earth.server.util.osm.tag.Tags;
 import net.gegy1000.earth.server.util.raster.Rasterize;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 
-import java.util.Map;
 import java.util.Set;
 
-public class Lake extends Area {
-    public Lake(Geometry geometry, Map<String, String> tags) {
+public class Watersource extends Area {
+    public Watersource(Geometry geometry, Tags tags) {
         super(geometry, tags);
     }
 
@@ -29,6 +29,6 @@ public class Lake extends Area {
 
     @Override
     public MapObjectType getType() {
-        return MapObjectType.LAKE;
+        return MapObjectType.WATER_SOURCE;
     }
 }

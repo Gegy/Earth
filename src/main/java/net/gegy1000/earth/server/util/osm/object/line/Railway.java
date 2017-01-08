@@ -4,8 +4,8 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
 import net.gegy1000.earth.server.util.osm.object.MapObjectType;
-import net.gegy1000.earth.server.util.osm.tag.TagHandler;
 import net.gegy1000.earth.server.util.osm.tag.TagType;
+import net.gegy1000.earth.server.util.osm.tag.Tags;
 import net.gegy1000.earth.server.util.raster.Rasterize;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.minecraft.block.state.IBlockState;
@@ -14,16 +14,15 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class Railway extends Line {
     private double width;
 
-    public Railway(EarthGenerator generator, LineString lines, Map<String, String> tags) {
+    public Railway(EarthGenerator generator, LineString lines, Tags tags) {
         super(lines, tags);
-        int tracks = TagHandler.getFull(TagType.INTEGER, tags, 1, "tracks");
-        this.width = 3.0 * tracks * generator.getRatio();
+        int tracks = tags.tag("tracks").get(TagType.INTEGER, 1);
+        this.width = 3.0 * tracks / generator.getScaleRatio();
     }
 
     @Override

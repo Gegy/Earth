@@ -18,10 +18,11 @@ public class WorldTypeEarth extends WorldType {
         this.decorate = decorate;
         this.structures = structures;
         this.cloudHeight = cloudHeight;
+        this.generator.load();
     }
 
     public static EarthGenerator getGenerator(World world) {
-        return world != null && world.getWorldType() instanceof WorldTypeEarth ? ((WorldTypeEarth) world.getWorldType()).getGenerator() : Earth.GENERATOR;
+        return world != null && world.getWorldType() instanceof WorldTypeEarth ? ((WorldTypeEarth) world.getWorldType()).getGenerator() : Earth.GENERATOR_145;
     }
 
     @Override

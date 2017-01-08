@@ -24,10 +24,8 @@ import java.io.OutputStream;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -40,7 +38,6 @@ public class MapTile {
     private final int tileLat;
     private final int tileLon;
     private final Map<ChunkPos, Map<SubChunkPos, IBlockState>> chunks = new HashMap<>();
-    private final Set<ChunkPos> generatedChunks = new HashSet<>();
 
     public MapTile(World world, int tileLat, int tileLon) {
         this.world = world;
@@ -131,15 +128,16 @@ public class MapTile {
     }
 
     public void generate(ChunkPos chunk, ChunkPrimer primer) {
-        if (!this.generatedChunks.contains(chunk)) {
-            this.generatedChunks.add(chunk);
-            Map<SubChunkPos, IBlockState> blocks = this.chunks.get(chunk);
-            if (blocks != null) {
-                for (Map.Entry<SubChunkPos, IBlockState> entry : blocks.entrySet()) {
-                    SubChunkPos pos = entry.getKey();
-                    primer.setBlockState(pos.getX(), pos.getY(), pos.getZ(), entry.getValue());
-                }
+        Map<SubChunkPos, IBlockState> blocks = this.chunks.remove(chunk);
+        if (blocks != null) {
+            for (Map.Entry<SubChunkPos, IBlockState> entry : blocks.entrySet()) {
+                SubChunkPos pos = entry.getKey();
+                primer.setBlockState(pos.getX(), pos.getY(), pos.getZ(), entry.getValue());
             }
         }
+    }
+
+    public void clear() {
+        this.chunks.clear();
     }
 }

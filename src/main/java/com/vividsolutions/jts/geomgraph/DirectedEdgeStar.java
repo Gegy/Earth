@@ -237,14 +237,14 @@ public class DirectedEdgeStar
             // assert: sym.isInResult() == false, since pairs of dirEdges should have been removed already
 
             switch (state) {
-                case this.SCANNING_FOR_INCOMING:
+                case SCANNING_FOR_INCOMING:
                     if (!nextIn.isInResult()) {
                         continue;
                     }
                     incoming = nextIn;
                     state = this.LINKING_TO_OUTGOING;
                     break;
-                case this.LINKING_TO_OUTGOING:
+                case LINKING_TO_OUTGOING:
                     if (!nextOut.isInResult()) {
                         continue;
                     }
@@ -281,14 +281,14 @@ public class DirectedEdgeStar
             }
 
             switch (state) {
-                case this.SCANNING_FOR_INCOMING:
+                case SCANNING_FOR_INCOMING:
                     if (nextIn.getEdgeRing() != er) {
                         continue;
                     }
                     incoming = nextIn;
                     state = this.LINKING_TO_OUTGOING;
                     break;
-                case this.LINKING_TO_OUTGOING:
+                case LINKING_TO_OUTGOING:
                     if (nextOut.getEdgeRing() != er) {
                         continue;
                     }

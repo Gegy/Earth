@@ -131,14 +131,14 @@ public class ConsistentPolygonRingChecker {
             // assert: sym.isInResult() == false, since pairs of dirEdges should have been removed already
 
             switch (state) {
-                case this.SCANNING_FOR_INCOMING:
+                case SCANNING_FOR_INCOMING:
                     if (!this.isPotentialResultAreaEdge(nextIn, opCode)) {
                         continue;
                     }
                     incoming = nextIn;
                     state = this.LINKING_TO_OUTGOING;
                     break;
-                case this.LINKING_TO_OUTGOING:
+                case LINKING_TO_OUTGOING:
                     if (!this.isPotentialResultAreaEdge(nextOut, opCode)) {
                         continue;
                     }

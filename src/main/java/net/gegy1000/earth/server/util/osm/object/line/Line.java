@@ -2,24 +2,29 @@ package net.gegy1000.earth.server.util.osm.object.line;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
+import net.gegy1000.earth.server.util.osm.WayType;
 import net.gegy1000.earth.server.util.osm.object.MapObject;
 import net.gegy1000.earth.server.util.osm.object.line.highway.Highway;
-import net.gegy1000.earth.server.util.osm.tag.TagHandler;
 import net.gegy1000.earth.server.util.osm.tag.TagType;
+import net.gegy1000.earth.server.util.osm.tag.Tags;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public abstract class Line extends MapObject {
     protected LineString line;
     protected boolean bridge;
 
-    public Line(LineString line, Map<String, String> tags) {
+    public Line(LineString line, Tags tags) {
         super(tags);
         this.line = line;
-        this.bridge = TagHandler.getFull(TagType.BOOLEAN, tags, false, "bridge");
+        this.bridge = tags.tag("bridge").get(TagType.BOOLEAN, false);
+    }
+
+    @Override
+    public WayType getWayType() {
+        return WayType.LINE;
     }
 
     protected List<Coordinate> toQuad(Coordinate start, Coordinate end, double width) {
@@ -36,26 +41,26 @@ public abstract class Line extends MapObject {
         return points;
     }
 
-    public static Line build(EarthGenerator generator, LineString line, Map<String, String> tags) {
-        if (TagHandler.is(tags, "highway", false)) {
+    public static Line build(EarthGenerator generator, LineString line, Tags tags) {
+        if (tags.is("highway", false)) {
             Highway highway = Highway.get(generator, line, tags);
             if (highway != null) {
                 return highway;
             }
         }
-        if (TagHandler.is(tags, "barrier", false)) {
+        if (tags.is("barrier", false)) {
             return new Barrier(generator, line, tags);
         }
-        if (TagHandler.is(tags, "railway", false)) {
+        if (tags.is("railway", false)) {
             return new Railway(generator, line, tags);
         }
-        if (TagHandler.is(tags, "waterway", false)) {
+        if (tags.is("waterway", false)) {
             String waterway = tags.get("waterway");
             if (waterway.equals("river") || waterway.equals("stream") || waterway.equals("canal")) {
                 return new River(generator, line, tags);
             }
         }
-        if (TagHandler.is(tags, "water", false)) {
+        if (tags.is("water", false)) {
             String water = tags.get("water");
             if (water.equals("river") || water.equals("stream") || water.equals("canal")) {
                 return new River(generator, line, tags);

@@ -3,6 +3,7 @@ package net.gegy1000.earth.server.util.osm;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.gegy1000.earth.server.world.gen.WorldTypeEarth;
 import net.minecraft.util.math.MathHelper;
@@ -12,7 +13,9 @@ import java.util.concurrent.TimeUnit;
 
 public class MapHandler {
     private static final LoadingCache<MapTilePos, MapTile> MAP_TILES = CacheBuilder.newBuilder()
-            .expireAfterAccess(8, TimeUnit.SECONDS)
+            .expireAfterAccess(1, TimeUnit.SECONDS)
+            .maximumSize(6)
+            .removalListener((RemovalListener<MapTilePos, MapTile>) notification -> notification.getValue().clear())
             .build(new CacheLoader<MapTilePos, MapTile>() {
                 @Override
                 public MapTile load(MapTilePos pos) {

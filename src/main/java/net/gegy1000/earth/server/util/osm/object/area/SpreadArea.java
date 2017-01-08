@@ -2,6 +2,7 @@ package net.gegy1000.earth.server.util.osm.object.area;
 
 import com.vividsolutions.jts.geom.Geometry;
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
+import net.gegy1000.earth.server.util.osm.tag.Tags;
 import net.gegy1000.earth.server.util.raster.Rasterize;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.minecraft.block.state.IBlockState;
@@ -15,7 +16,7 @@ import java.util.Random;
 import java.util.Set;
 
 public abstract class SpreadArea extends Area {
-    public SpreadArea(Geometry geometry, Map<String, String> tags) {
+    public SpreadArea(Geometry geometry, Tags tags) {
         super(geometry, tags);
     }
 

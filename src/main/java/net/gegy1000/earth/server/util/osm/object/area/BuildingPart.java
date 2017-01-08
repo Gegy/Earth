@@ -4,8 +4,8 @@ import com.vividsolutions.jts.geom.Geometry;
 import net.gegy1000.earth.server.util.osm.MapBlockAccess;
 import net.gegy1000.earth.server.util.osm.OSMConstants;
 import net.gegy1000.earth.server.util.osm.object.MapObjectType;
-import net.gegy1000.earth.server.util.osm.tag.TagHandler;
 import net.gegy1000.earth.server.util.osm.tag.TagType;
+import net.gegy1000.earth.server.util.osm.tag.Tags;
 import net.gegy1000.earth.server.util.raster.Rasterize;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.minecraft.block.state.IBlockState;
@@ -13,7 +13,6 @@ import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 
-import java.util.Map;
 import java.util.Set;
 
 public class BuildingPart extends Area {
@@ -24,19 +23,18 @@ public class BuildingPart extends Area {
     protected int minLevel;
     protected boolean hasMinLevel = true;
 
-    public BuildingPart(EarthGenerator generator, Geometry geometry, Map<String, String> tags) {
+    public BuildingPart(EarthGenerator generator, Geometry geometry, Tags tags) {
         super(geometry, tags);
-        this.levels = TagHandler.getFull(TagType.INTEGER, tags, 1, "levels", "building:levels");
-        this.minLevel = TagHandler.getFull(TagType.INTEGER, tags, Integer.MIN_VALUE, "min_level", "building:min_level");
+        this.levels = tags.top("levels").get(TagType.INTEGER, 1);
+        this.minLevel = tags.top("min_level").get(TagType.INTEGER, Integer.MIN_VALUE);
         if (this.minLevel == Integer.MIN_VALUE) {
             this.hasMinLevel = false;
             this.minLevel = 0;
         }
-        double scaleRatio = generator.getRatio();
-        double defaultHeight = this.levels * OSMConstants.LEVEL_HEIGHT * scaleRatio;
-        this.height = MathHelper.ceil(Math.max(OSMConstants.LEVEL_HEIGHT, TagHandler.getFull(TagType.DOUBLE, tags, defaultHeight, "height", "building:height") * scaleRatio));
-        double defaultMinHeight = this.minLevel * OSMConstants.LEVEL_HEIGHT * scaleRatio;
-        this.minHeight = MathHelper.ceil(TagHandler.getFull(TagType.DOUBLE, tags, defaultMinHeight, "min_height", "building:min_height") * scaleRatio);
+        double scaleRatio = generator.getScaleRatio();
+        double defaultHeight = this.levels * OSMConstants.LEVEL_HEIGHT;
+        this.height = MathHelper.ceil(Math.max(OSMConstants.LEVEL_HEIGHT, tags.top("height").get(TagType.DOUBLE, defaultHeight) / scaleRatio));
+        this.minHeight = MathHelper.ceil(tags.top("min_height").get(TagType.DOUBLE, 0.0) / scaleRatio);
         if (this.surface == null) {
             this.surface = Blocks.QUARTZ_BLOCK.getDefaultState();
         }

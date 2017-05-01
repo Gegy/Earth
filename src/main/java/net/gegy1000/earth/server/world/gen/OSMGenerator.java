@@ -26,7 +26,7 @@ public class OSMGenerator extends EarthGenerator {
 
     @Override
     public int getGenerationHeight(int x, int z) {
-        return 64;
+        return 32;
     }
 
     @Override

@@ -4,56 +4,55 @@ import gnu.trove.list.TLongList;
 import net.gegy1000.earth.server.util.osm.tag.TagSelector;
 import net.gegy1000.earth.server.util.osm.tag.Tags;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public enum WayType {
-    LINE,
-    AREA,
-    POINT;
+    POINT("point"),
+    LINE("line"),
+    AREA("area");
 
-    public static final Map<TagSelector, WayType> TAG_TYPES = new HashMap<>();
+    private String name;
+
+    WayType(String name) {
+        this.name = name;
+    }
+
+    public static final List<TagSelector> LINE_SELECTORS = new ArrayList<>();
 
     static {
-        TAG_TYPES.put(TagSelector.baseKey("building"), AREA);
-        TAG_TYPES.put(TagSelector.baseKey("area"), AREA);
-        TAG_TYPES.put(TagSelector.keyValue("water", "lake"), AREA);
-        TAG_TYPES.put(TagSelector.keyValue("water", "pond"), AREA);
-        TAG_TYPES.put(TagSelector.keyValue("amenity", "school"), AREA);
-        TAG_TYPES.put(TagSelector.keyValue("railway", "platform"), AREA);
-        TAG_TYPES.put(TagSelector.keyValue("railway", "station"), AREA);
-        TAG_TYPES.put(TagSelector.key("leisure"), AREA);
-        TAG_TYPES.put(TagSelector.key("landuse"), AREA);
-        TAG_TYPES.put(TagSelector.keyValue("waterway", "riverbank"), AREA);
-
-        TAG_TYPES.put(TagSelector.baseKey("line"), LINE);
-        TAG_TYPES.put(TagSelector.baseKey("highway"), LINE);
-        TAG_TYPES.put(TagSelector.baseKey("barrier"), LINE);
-        TAG_TYPES.put(TagSelector.keyValue("water", "stream"), LINE);
-        TAG_TYPES.put(TagSelector.keyValue("water", "river"), LINE);
-        TAG_TYPES.put(TagSelector.keyValue("railway", "subway"), LINE);
-        TAG_TYPES.put(TagSelector.keyValue("railway", "rail"), LINE);
-        TAG_TYPES.put((key, value) -> key.equals("waterway") && !value.equals("riverbank"), LINE);
-
-        TAG_TYPES.put(TagSelector.baseKey("point"), POINT);
+        LINE_SELECTORS.add(TagSelector.baseKey("highway"));
+        LINE_SELECTORS.add(TagSelector.baseKey("barrier"));
+        LINE_SELECTORS.add(TagSelector.keyValue("water", "stream"));
+        LINE_SELECTORS.add(TagSelector.keyValue("water", "river"));
+        LINE_SELECTORS.add(TagSelector.keyValue("railway", "subway"));
+        LINE_SELECTORS.add(TagSelector.keyValue("railway", "rail"));
+        LINE_SELECTORS.add((key, value) -> key.equals("waterway") && !value.equals("riverbank"));
     }
 
     public static WayType get(Tags tags, TLongList nodes) {
+        for (WayType type : WayType.values()) {
+            if (tags.is(type.name, true)) {
+                return type;
+            }
+        }
         if (nodes != null) {
             if (nodes.size() == 1) {
                 return POINT;
             } else if (nodes.get(nodes.size() - 1) != nodes.get(0)) {
                 return LINE;
             }
+        } else {
+            return POINT;
         }
-        for (Map.Entry<TagSelector, WayType> entry : TAG_TYPES.entrySet()) {
-            TagSelector selector = entry.getKey();
+        for (TagSelector selector : LINE_SELECTORS) {
             for (Map.Entry<String, String> tagEntry : tags.all().entrySet()) {
                 if (selector.select(tagEntry.getKey(), tagEntry.getValue())) {
-                    return entry.getValue();
+                    return WayType.LINE;
                 }
             }
         }
-        return LINE;
+        return AREA;
     }
 }

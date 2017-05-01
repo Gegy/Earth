@@ -21,6 +21,7 @@ public class MapMaterial {
     private static Map<Integer, Set<Block>> BLOCK_COLOURS = new HashMap<>();
 
     public static void init() {
+        IBlockState coarseDirt = Blocks.DIRT.getDefaultState().withProperty(BlockDirt.VARIANT, BlockDirt.DirtType.COARSE_DIRT);
         MapMaterial.addMaterial("concrete", Blocks.STONEBRICK, Blocks.STONE_BRICK_STAIRS, Blocks.COBBLESTONE_WALL);
         MapMaterial.addMaterial("metal", Blocks.IRON_BLOCK, Blocks.QUARTZ_STAIRS, Blocks.IRON_BARS);
         MapMaterial.addMaterial("bars", Blocks.IRON_BARS, Blocks.IRON_BARS, Blocks.IRON_BARS);
@@ -29,7 +30,7 @@ public class MapMaterial {
         MapMaterial.addMaterial("wood", Blocks.PLANKS, Blocks.OAK_STAIRS, Blocks.OAK_FENCE);
         MapMaterial.addMaterial("asphalt", Blocks.COAL_BLOCK, Blocks.NETHER_BRICK_STAIRS, Blocks.NETHER_BRICK_FENCE);
         MapMaterial.addMaterial("glass", Blocks.GLASS, Blocks.GLASS, Blocks.GLASS_PANE);
-        MapMaterial.addMaterial("grass", Blocks.GRASS.getDefaultState(), Blocks.GRASS.getDefaultState(), Blocks.TALLGRASS.getDefaultState().withProperty(BlockTallGrass.TYPE, BlockTallGrass.EnumType.GRASS));
+        MapMaterial.addMaterial("grass", coarseDirt, coarseDirt, Blocks.TALLGRASS.getDefaultState().withProperty(BlockTallGrass.TYPE, BlockTallGrass.EnumType.GRASS));
         MapMaterial.addMaterial("cobblestone", Blocks.COBBLESTONE, Blocks.STONE_STAIRS, Blocks.COBBLESTONE_WALL);
         MapMaterial.addMaterial("pebbles", Blocks.COBBLESTONE, Blocks.STONE_STAIRS, Blocks.COBBLESTONE_WALL);
         MapMaterial.addMaterial("pebblestone", Blocks.COBBLESTONE, Blocks.STONE_STAIRS, Blocks.COBBLESTONE_WALL);
@@ -43,7 +44,6 @@ public class MapMaterial {
         MapMaterial.addMaterial("fine_gravel", Blocks.GRAVEL, Blocks.GRAVEL, Blocks.GRAVEL);
         MapMaterial.addMaterial("sand", Blocks.SAND, Blocks.SANDSTONE_STAIRS, Blocks.BIRCH_FENCE);
         MapMaterial.addMaterial("granite", Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.GRANITE), Blocks.STONE_STAIRS.getDefaultState(), Blocks.COBBLESTONE_WALL.getDefaultState());
-        IBlockState coarseDirt = Blocks.DIRT.getDefaultState().withProperty(BlockDirt.VARIANT, BlockDirt.DirtType.COARSE_DIRT);
         MapMaterial.addMaterial("dirt", coarseDirt, coarseDirt, coarseDirt);
         MapMaterial.addMaterial("mud", coarseDirt, coarseDirt, coarseDirt);
         MapMaterial.addMaterial("earth", coarseDirt, coarseDirt, coarseDirt);

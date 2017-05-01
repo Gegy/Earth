@@ -71,4 +71,8 @@ public class Tags {
     public boolean is(String key, boolean base) {
         return (base ? this.tag(key) : this.full(key)).getValue() != null;
     }
+
+    public boolean is(String key) {
+        return this.tags.containsKey(key) && this.tags.get(key).getValue() != null;
+    }
 }

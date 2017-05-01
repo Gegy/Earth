@@ -87,6 +87,9 @@ public class EarthMainMenuGUI extends GuiMainMenu {
                 }
             }
         }
+
+        Tessellator tessellator = Tessellator.getInstance();
+        VertexBuffer buffer = tessellator.getBuffer();
         ScaledResolution resolution = new ScaledResolution(MC);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         if (!this.earthCompiled) {
@@ -102,9 +105,6 @@ public class EarthMainMenuGUI extends GuiMainMenu {
         this.drawGradientRect(0, 0, this.width, this.height, 0xFF000000, 0xFF000000);
         float timer = this.timer + partialTicks;
 
-        Tessellator tesselator = Tessellator.getInstance();
-        VertexBuffer buffer = tesselator.getBuffer();
-
         GlStateManager.enableAlpha();
         GlStateManager.enableBlend();
         GlStateManager.disableCull();
@@ -116,7 +116,7 @@ public class EarthMainMenuGUI extends GuiMainMenu {
         GlStateManager.pushMatrix();
         GlStateManager.translate(this.width / 2.0F, this.height / 2.0F, 0.0F);
         GlStateManager.rotate(timer * 0.001F, 0.0F, 1.0F, 0.0F);
-        this.renderStars(tesselator, buffer);
+        this.renderStars(tessellator, buffer);
         GlStateManager.popMatrix();
 
         GlStateManager.enableTexture2D();

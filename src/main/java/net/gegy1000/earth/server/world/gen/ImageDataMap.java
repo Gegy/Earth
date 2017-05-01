@@ -90,7 +90,7 @@ public class ImageDataMap {
         InputStream in = ImageDataMap.class.getResourceAsStream(this.tileAccess[x + (y * this.tileCountX)]);
         if (in != null) {
             try {
-                Earth.LOGGER.debug("Load " + x + ", " + y);
+                Earth.LOGGER.debug("Loaded Earth image tile at {}, {}", x, y);
                 return this.factory.create(ImageIO.read(in), this.tileWidth, this.tileHeight);
             } catch (IOException e) {
                 e.printStackTrace();

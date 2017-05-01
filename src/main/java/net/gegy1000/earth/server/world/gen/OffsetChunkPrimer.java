@@ -4,11 +4,11 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.world.chunk.ChunkPrimer;
 
-public class MockChunkPrimer extends ChunkPrimer {
+public class OffsetChunkPrimer extends ChunkPrimer {
     private ChunkPrimer parent;
     private int offsetY;
 
-    public MockChunkPrimer(ChunkPrimer parent, int offsetY) {
+    public OffsetChunkPrimer(ChunkPrimer parent, int offsetY) {
         this.parent = parent;
         this.offsetY = offsetY;
     }

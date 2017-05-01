@@ -83,7 +83,7 @@ public class ChunkGeneratorEarth implements IChunkGenerator {
     }
 
     public void generateBiomeBlocks(int chunkX, int chunkZ, ChunkPrimer primer, Biome[] biomes) {
-        MockChunkPrimer mockPrimer = new MockChunkPrimer(primer, 62 - OCEAN_HEIGHT);
+        OffsetChunkPrimer mockPrimer = new OffsetChunkPrimer(primer, 62 - OCEAN_HEIGHT);
         double scale = 0.03125D;
         this.depthBuffer = this.surfaceNoise.getRegion(this.depthBuffer, chunkX * 16, chunkZ * 16, 16, 16, scale * 2.0D, scale * 2.0D, 1.0D);
         for (int x = 0; x < 16; x++) {

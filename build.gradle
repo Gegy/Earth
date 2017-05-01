@@ -22,6 +22,7 @@ minecraft {
     version = "1.10.2-12.18.2.2099"
     runDir = "minecraft"
     mappings = "stable_29"
+    makeObfSourceJar = false
 }
 
 repositories {
@@ -62,10 +63,10 @@ processResources {
     }
 }
 
-task devJar(type: Jar) {
-    classifier = "dev"
-    from sourceSets.main.output
-}
+//task devJar(type: Jar) {
+//    classifier = "dev"
+//    from sourceSets.main.output
+//}
 
 String getModFile() {
     String path = ""

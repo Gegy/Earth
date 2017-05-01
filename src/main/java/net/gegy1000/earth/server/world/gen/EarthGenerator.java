@@ -11,7 +11,7 @@ import net.minecraft.world.biome.Biome;
 import java.util.Map;
 import java.util.Random;
 
-public class EarthGenerator {
+public class EarthGenerator implements HeightProvider {
     protected ImageDataMap heightmap;
     protected ImageDataMap biomemap;
 
@@ -177,6 +177,11 @@ public class EarthGenerator {
 
     private static double cubic(double[] p, double x) {
         return p[1] + 0.5 * x * (p[2] - p[0] + x * (2.0 * p[0] - 5.0 * p[1] + 4.0 * p[2] - p[3] + x * (3.0 * (p[1] - p[2]) + p[3] - p[0])));
+    }
+
+    @Override
+    public int provideHeight(int x, int z) {
+        return this.getGenerationHeight(x, z);
     }
 
     protected static class Bicubic {

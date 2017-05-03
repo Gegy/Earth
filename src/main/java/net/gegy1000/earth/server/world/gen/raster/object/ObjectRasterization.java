@@ -4,11 +4,12 @@ import net.gegy1000.earth.server.util.osm.MapObject;
 import net.gegy1000.earth.server.util.osm.OSMConstants;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.gegy1000.earth.server.world.gen.raster.BlockGraphics;
+import net.gegy1000.earth.server.world.gen.raster.ConstantRasterIds;
 import net.gegy1000.earth.server.world.gen.raster.GenData;
 
 import java.util.List;
 
-public interface ObjectRasterization extends OSMConstants {
+public interface ObjectRasterization extends OSMConstants, ConstantRasterIds {
     BlockGraphics GRAPHICS = new BlockGraphics();
     HighwayRasterization HIGHWAY = new HighwayRasterization();
     BuildingRasterization BUILDING = new BuildingRasterization();

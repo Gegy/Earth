@@ -1,48 +1,34 @@
 package net.gegy1000.earth.server.world.gen.raster;
 
+import net.gegy1000.earth.server.world.gen.raster.adapter.DefaultAdapter;
 import net.gegy1000.earth.server.world.gen.raster.adapter.GenAdapter;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.init.Blocks;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.ChunkPrimer;
 
-public class GenData {
-    public static final IBlockState DEFAULT = Blocks.AIR.getDefaultState();
+import java.util.List;
 
-    private final BlockPos origin;
-    private final IBlockState[] states;
+public class GenData {
+    private final int originX;
+    private final int originZ;
+    private final byte[] data;
     private final int width;
     private final int height;
-    private GenAdapter adapter;
+    private GenAdapter adapter = new DefaultAdapter();
 
-    public GenData(BlockPos origin, int width, int height) {
-        this.origin = origin;
-        this.states = new IBlockState[width * height];
+    public GenData(int originX, int originZ, int width, int height) {
+        this.originX = originX;
+        this.originZ = originZ;
+        this.data = new byte[width * height];
         this.width = width;
         this.height = height;
     }
 
-    public void put(int x, int z, IBlockState state) {
-        if (x >= 0 && z >= 0 && x <= this.width && z <= this.height) {
-            this.put(this.index(x, z), state);
-        }
+    public void put(int x, int z, byte state) {
+        this.data[this.index(x, z)] = state;
     }
 
-    public void put(int i, IBlockState state) {
-        this.states[i] = state;
-    }
-
-    public IBlockState get(int x, int z) {
-        return this.get(this.index(x, z));
-    }
-
-    public IBlockState get(int i) {
-        IBlockState state = this.states[i];
-        if (state == null) {
-            return DEFAULT;
-        }
-        return state;
+    public byte get(int x, int z) {
+        return this.data[this.index(x, z)];
     }
 
     public GenData adapt(GenAdapter adapter) {
@@ -51,47 +37,38 @@ public class GenData {
     }
 
     public void generate(ChunkPos mask, ChunkPrimer primer) {
-        int originX = this.origin.getX();
-        int originY = this.origin.getY();
-        int originZ = this.origin.getZ();
-        if (originX + this.width >= mask.getXStart() && originZ + this.height >= mask.getZStart() && originX <= mask.getXEnd() && originZ <= mask.getZEnd()) {
-            int minX = mask.getXStart() - originX;
-            int minZ = mask.getZStart() - originZ;
-            int maxX = mask.getXEnd() - originX;
-            int maxZ = mask.getZEnd() - originZ;
-            int index = 0;
-            IBlockState[] verticalColumn = new IBlockState[256];
-            for (int z = 0; z < this.height; z++) {
-                for (int x = 0; x < this.width; x++) {
-                    if (x >= minX && z >= minZ && x <= maxX && z <= maxZ) {
-                        int globalX = originX + x;
-                        int globalZ = originZ + z;
-                        IBlockState state = this.get(index);
-                        if (this.adapter != null) {
-                            if (this.adapter.adapt(globalX, globalZ, state, verticalColumn)) {
-                                for (int y = originY; y < 256; y++) {
-                                    IBlockState s = verticalColumn[y];
-                                    if (s != null && s != DEFAULT) {
-                                        primer.setBlockState(globalX & 15, y, globalZ & 15, s);
-                                    }
-                                    verticalColumn[y] = null;
-                                }
-                            }
-                        } else {
-                            primer.setBlockState(x, 0, z, state);
-                        }
-                    }
-                    index++;
-                }
-            }
+        if (this.originX + this.width >= mask.getXStart() && this.originZ + this.height >= mask.getZStart() && this.originX <= mask.getXEnd() && this.originZ <= mask.getZEnd()) {
+            int minX = Math.max(0, mask.getXStart() - this.originX);
+            int minZ = Math.max(0, mask.getZStart() - this.originZ);
+            int maxX = Math.min(this.width, (mask.getXEnd() + 1) - this.originX);
+            int maxZ = Math.min(this.height, (mask.getZEnd() + 1) - this.originZ);
+            this.adapter.setup(minX, minZ, maxX, maxZ, this.originX, this.originZ);
+            this.adapter.adapt(this, primer);
         }
     }
 
-    public BlockPos getOrigin() {
-        return this.origin;
+    public int getOriginX() {
+        return this.originX;
     }
 
-    private int index(int x, int z) {
+    public int getOriginZ() {
+        return this.originZ;
+    }
+
+    public int getWidth() {
+        return this.width;
+    }
+
+    public int getHeight() {
+        return this.height;
+    }
+
+    public int index(int x, int z) {
         return x + z * this.width;
+    }
+
+    public GenData addTo(List<GenData> data) {
+        data.add(this);
+        return this;
     }
 }

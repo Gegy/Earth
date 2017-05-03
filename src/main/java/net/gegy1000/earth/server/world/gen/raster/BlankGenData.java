@@ -1,22 +1,20 @@
 package net.gegy1000.earth.server.world.gen.raster;
 
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.ChunkPrimer;
 
 public class BlankGenData extends GenData {
     public BlankGenData() {
-        super(BlockPos.ORIGIN, 0, 0);
+        super(0, 0, 0, 0);
     }
 
     @Override
-    public void put(int i, IBlockState state) {
+    public void put(int x, int z, byte state) {
     }
 
     @Override
-    public IBlockState get(int i) {
-        return DEFAULT;
+    public byte get(int x, int z) {
+        return ConstantRasterIds.AIR;
     }
 
     @Override

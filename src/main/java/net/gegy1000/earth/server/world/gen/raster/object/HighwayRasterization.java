@@ -7,13 +7,11 @@ import net.gegy1000.earth.server.util.osm.tag.TagType;
 import net.gegy1000.earth.server.util.osm.tag.Tags;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
 import net.gegy1000.earth.server.world.gen.raster.GenData;
-import net.gegy1000.earth.server.world.gen.raster.adapter.TerrainLevelAdapter;
-import net.minecraft.block.BlockColored;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.EnumDyeColor;
+import net.gegy1000.earth.server.world.gen.raster.adapter.RoadAdapter;
 import net.minecraft.util.math.MathHelper;
 
 import java.awt.BasicStroke;
+import java.awt.geom.Path2D;
 import java.util.Collection;
 import java.util.List;
 
@@ -30,10 +28,12 @@ public class HighwayRasterization implements ObjectRasterization {
         double defaultWidth = lanes * LANE_WIDTH;
         int width = MathHelper.ceil(MathHelper.clamp(tags.tag("width").get(TagType.DOUBLE, defaultWidth), 1, MAXIMUM_HIGHWAY_WIDTH));
         Collection<LineString> lines = object.toLines();
-        GRAPHICS.setBlock(Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.BLACK));
         GRAPHICS.setStroke(new BasicStroke(width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        GRAPHICS.setState(SURFACE);
+        RoadAdapter adapter = new RoadAdapter(generator);
         for (LineString line : lines) {
-            data.add(GRAPHICS.draw(GRAPHICS.toPath(generator, line)).adapt(new TerrainLevelAdapter(generator)));
+            Path2D path = GRAPHICS.toPath(generator, line);
+            GRAPHICS.draw(path, GRAPHICS::draw).adapt(adapter).addTo(data);
         }
     }
 }

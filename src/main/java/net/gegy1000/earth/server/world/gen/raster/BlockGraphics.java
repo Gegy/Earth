@@ -7,11 +7,9 @@ import de.topobyte.jts2awt.Jts2Awt;
 import net.gegy1000.earth.Earth;
 import net.gegy1000.earth.server.util.MapPoint;
 import net.gegy1000.earth.server.world.gen.EarthGenerator;
-import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 
+import java.awt.BasicStroke;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
@@ -30,6 +28,8 @@ import java.awt.image.WritableRaster;
 import java.util.Hashtable;
 
 public class BlockGraphics {
+    private static final BasicStroke RESET_STROKE = new BasicStroke(1);
+
     private final BufferedImage rasterImage = new BufferedImage(new BlockGraphics.BlockColor(), new BlockGraphics.BlockRaster(128, 128), false, new Hashtable<>());
     private final Graphics2D graphics = this.rasterImage.createGraphics();
 
@@ -41,10 +41,13 @@ public class BlockGraphics {
 
     private GenData data;
 
+    private boolean thick;
+
     public BlockGraphics() {
         this.graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         this.graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
         this.graphics.setColor(this.stateColor);
+        this.resetStroke();
     }
 
     public void frame(int minX, int minZ, int maxX, int maxZ) {
@@ -58,7 +61,7 @@ public class BlockGraphics {
         this.frame(MathHelper.floor(min.getX()), MathHelper.floor(min.getZ()), MathHelper.ceil(max.getX()), MathHelper.ceil(max.getZ()));
     }
 
-    public void setBlock(IBlockState state) {
+    public void setState(int state) {
         this.stateColor.set(state);
     }
 
@@ -66,32 +69,37 @@ public class BlockGraphics {
         this.graphics.setStroke(stroke);
     }
 
+    public void resetStroke() {
+        this.graphics.setStroke(RESET_STROKE);
+    }
+
     public void setThick(boolean thick) {
-        this.graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, thick ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_OFF);
+        if (this.thick != thick) {
+            this.graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, thick ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_OFF);
+            this.thick = thick;
+        }
     }
 
-    public GenData draw(Shape shape) {
-        return this.draw(shape, this.graphics::draw);
+    public void draw(Shape shape) {
+        this.graphics.draw(shape);
     }
 
-    public GenData drawVertices(Area area) {
-        return this.draw(area, s -> {
-            PathIterator pathIterator = area.getPathIterator(null);
-            double[] coordinates = new double[6];
-            while (!pathIterator.isDone()) {
-                int type = pathIterator.currentSegment(coordinates);
-                if (type == PathIterator.SEG_LINETO || type == PathIterator.SEG_MOVETO) {
-                    int x = (int) coordinates[0];
-                    int y = (int) coordinates[1];
-                    this.graphics.drawLine(x, y, x, y);
-                }
-                pathIterator.next();
+    public void fill(Shape shape) {
+        this.graphics.fill(shape);
+    }
+
+    public void drawVertices(Area area) {
+        PathIterator pathIterator = area.getPathIterator(null);
+        double[] coordinates = new double[6];
+        while (!pathIterator.isDone()) {
+            int type = pathIterator.currentSegment(coordinates);
+            if (type == PathIterator.SEG_LINETO || type == PathIterator.SEG_MOVETO) {
+                int x = (int) coordinates[0];
+                int y = (int) coordinates[1];
+                this.graphics.drawLine(x, y, x, y);
             }
-        });
-    }
-
-    public GenData fill(Shape shape) {
-        return this.draw(shape, this.graphics::fill);
+            pathIterator.next();
+        }
     }
 
     public GenData draw(Shape shape, ShapeRenderer renderer) {
@@ -106,7 +114,7 @@ public class BlockGraphics {
                 int width = MathHelper.ceil(bounds.getWidth()) + 8;
                 int height = MathHelper.ceil(bounds.getHeight()) + 8;
                 int imageSize = this.rasterImage.getWidth();
-                this.data = new GenData(new BlockPos(shapeMinX, 0, shapeMinZ), width, height);
+                this.data = new GenData(shapeMinX, shapeMinZ, width, height);
                 int sectorsX = MathHelper.ceil(width / (double) imageSize);
                 int sectorsZ = MathHelper.ceil(height / (double) imageSize);
                 for (int sectorX = 0; sectorX < sectorsX; sectorX++) {
@@ -164,7 +172,7 @@ public class BlockGraphics {
 
     private class BlockColor extends DirectColorModel {
         BlockColor() {
-            super(32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+            super(8, 0xFF, 0, 0, 0);
         }
 
         @Override
@@ -175,7 +183,7 @@ public class BlockGraphics {
 
     private class BlockModel extends SinglePixelPackedSampleModel {
         BlockModel(int w, int h) {
-            super(DataBuffer.TYPE_INT, w, h, new int[] { 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000 });
+            super(DataBuffer.TYPE_BYTE, w, h, new int[] { 0xFF, 0, 0 });
         }
 
         @Override
@@ -198,24 +206,22 @@ public class BlockGraphics {
         private final int width;
 
         BlockBuffer(int width, int height) {
-            super(DataBuffer.TYPE_INT, width * height);
+            super(DataBuffer.TYPE_BYTE, width * height);
             this.width = width;
         }
 
         @Override
         public int getElem(int bank, int i) {
-            BlockPos dataOrigin = BlockGraphics.this.data.getOrigin();
-            int x = i % this.width + BlockGraphics.this.originX - dataOrigin.getX();
-            int z = i / this.width + BlockGraphics.this.originZ - dataOrigin.getZ();
-            return Block.getStateId(BlockGraphics.this.data.get(x, z)) | 0xFF000000;
+            int x = i % this.width + BlockGraphics.this.originX - BlockGraphics.this.data.getOriginX();
+            int z = i / this.width + BlockGraphics.this.originZ - BlockGraphics.this.data.getOriginZ();
+            return BlockGraphics.this.data.get(x, z) & 0xFF;
         }
 
         @Override
         public void setElem(int bank, int i, int value) {
-            BlockPos dataOrigin = BlockGraphics.this.data.getOrigin();
-            int x = i % this.width + BlockGraphics.this.originX - dataOrigin.getX();
-            int z = i / this.width + BlockGraphics.this.originZ - dataOrigin.getZ();
-            BlockGraphics.this.data.put(x, z, Block.getStateById(value & 0x00FFFFFF));
+            int x = i % this.width + BlockGraphics.this.originX - BlockGraphics.this.data.getOriginX();
+            int z = i / this.width + BlockGraphics.this.originZ - BlockGraphics.this.data.getOriginZ();
+            BlockGraphics.this.data.put(x, z, (byte) (value & 0xFF));
         }
     }
 }

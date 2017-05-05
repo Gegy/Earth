@@ -62,7 +62,7 @@ public class MapTile {
     private void rasterize(EarthGenerator generator, MapObject object) {
         ObjectRasterization rasterization = ObjectRasterization.get(object);
         if (rasterization != null) {
-            rasterization.rasterize(generator, object, this.generationData);
+            rasterization.rasterize(this.world, generator, object, this.generationData);
         }
     }
 

@@ -75,4 +75,9 @@ public class Tags {
     public boolean is(String key) {
         return this.tags.containsKey(key) && this.tags.get(key).getValue() != null;
     }
+
+    public boolean is(String key, String value) {
+        String tagValue = this.tag(key).getValue();
+        return tagValue != null && tagValue.equals(value);
+    }
 }

@@ -26,6 +26,7 @@ import java.awt.image.SampleModel;
 import java.awt.image.SinglePixelPackedSampleModel;
 import java.awt.image.WritableRaster;
 import java.util.Hashtable;
+import java.util.function.Consumer;
 
 public class BlockGraphics {
     private static final BasicStroke RESET_STROKE = new BasicStroke(1);
@@ -97,6 +98,29 @@ public class BlockGraphics {
                 int x = (int) coordinates[0];
                 int y = (int) coordinates[1];
                 this.graphics.drawLine(x, y, x, y);
+            }
+            pathIterator.next();
+        }
+    }
+
+    public void outline(Area area, Consumer<Integer> drawLine) {
+        PathIterator pathIterator = area.getPathIterator(null);
+        double[] coordinates = new double[6];
+        int lastX = 0;
+        int lastY = 0;
+        while (!pathIterator.isDone()) {
+            int type = pathIterator.currentSegment(coordinates);
+            int x = (int) coordinates[0];
+            int y = (int) coordinates[1];
+            if (type == PathIterator.SEG_LINETO || type == PathIterator.SEG_MOVETO) {
+                if (type == PathIterator.SEG_LINETO) {
+                    int deltaX = x - lastX;
+                    int deltaY = y - lastY;
+                    drawLine.accept(MathHelper.ceil(Math.sqrt((deltaX * deltaX) + (deltaY * deltaY))));
+                    this.graphics.drawLine(lastX, lastY, x, y);
+                }
+                lastX = x;
+                lastY = y;
             }
             pathIterator.next();
         }

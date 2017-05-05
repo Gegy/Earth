@@ -2,11 +2,15 @@ package net.gegy1000.earth.server.world.gen.raster.adapter;
 
 import net.gegy1000.earth.server.world.gen.raster.ConstantRasterIds;
 import net.gegy1000.earth.server.world.gen.raster.GenData;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.init.Blocks;
 import net.minecraft.world.chunk.ChunkPrimer;
 
 import java.util.function.Consumer;
 
-public abstract class GenAdapter implements ConstantRasterIds {
+public abstract class GenAdapter {
+    public static final IBlockState AIR_STATE = Blocks.AIR.getDefaultState();
+
     protected int minX;
     protected int minZ;
     protected int maxX;
@@ -20,10 +24,19 @@ public abstract class GenAdapter implements ConstantRasterIds {
         for (int z = this.minZ; z < this.maxZ; z++) {
             for (int x = this.minX; x < this.maxX; x++) {
                 byte state = data.get(x, z);
-                if (state != AIR) {
+                if (state != ConstantRasterIds.AIR) {
                     consumer.accept(new State(x + this.originX, z + this.originZ, state));
                 }
             }
+        }
+    }
+
+    protected void setSafe(int x, int y, int z, IBlockState state, ChunkPrimer primer) {
+        if (x < 0 || y < 0 || z < 0 || x > 15 || y > 255 || z > 15) {
+            return;
+        }
+        if (primer.getBlockState(x, y, z) == AIR_STATE) {
+            primer.setBlockState(x, y, z, state);
         }
     }
 

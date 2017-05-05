@@ -1,6 +1,7 @@
 package net.gegy1000.earth.server.world.gen.raster.adapter;
 
 import net.gegy1000.earth.server.world.gen.HeightProvider;
+import net.gegy1000.earth.server.world.gen.raster.ConstantRasterIds;
 import net.gegy1000.earth.server.world.gen.raster.GenData;
 import net.minecraft.block.BlockColored;
 import net.minecraft.block.state.IBlockState;
@@ -21,7 +22,7 @@ public class RoadAdapter extends GenAdapter {
     public void adapt(GenData data, ChunkPrimer primer) {
         this.iterate(data, state -> {
             switch (state.getState()) {
-                case SURFACE:
+                case ConstantRasterIds.SURFACE:
                     primer.setBlockState(state.getChunkX(), this.provider.provideHeight(state.getX(), state.getZ()), state.getChunkZ(), SURFACE_STATE);
                     break;
             }
